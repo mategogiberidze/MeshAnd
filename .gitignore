@@ -8,3 +8,6 @@ build/
 .externalNativeBuild
 .cxx
 .kotlin/
+
+# graphify knowledge graph (rebuilt locally by the post-commit hook)
+graphify-out/

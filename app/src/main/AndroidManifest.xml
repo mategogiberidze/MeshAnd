@@ -27,6 +27,17 @@
         android:name="android.hardware.bluetooth_le"
         android:required="true" />
 
+    <!-- Android 11+ package visibility: find and bind OsmAnd's AIDL V2 service. -->
+    <queries>
+        <package android:name="net.osmand" />
+        <package android:name="net.osmand.plus" />
+        <package android:name="net.osmand.dev" />
+        <package android:name="net.osmand.huawei" />
+        <intent>
+            <action android:name="net.osmand.aidl.OsmandAidlServiceV2" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="false"
         android:label="@string/app_name"

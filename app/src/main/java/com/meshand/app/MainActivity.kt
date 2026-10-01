@@ -39,7 +39,10 @@ class MainActivity : ComponentActivity() {
                             NodesScreen(
                                 radio = status.radio,
                                 nodes = state.nodes,
+                                osmAnd = state.osmAnd,
                                 onDisconnect = viewModel::disconnect,
+                                onOsmAndEnabledChange = viewModel::setOsmAndEnabled,
+                                onShowOnOsmAnd = viewModel::showOnOsmAnd,
                             )
                         } else {
                             ConnectionScreen(

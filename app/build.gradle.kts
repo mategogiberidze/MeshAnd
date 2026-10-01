@@ -55,6 +55,9 @@ dependencies {
     implementation(libs.meshtastic.sdk.transport.ble)
     implementation(libs.kable.core)
 
+    // OsmAnd AIDL V2 client (net.osmand.aidlapi); vendored, see app/libs/README.md.
+    implementation(files("libs/osmand-aidl-lib-5.4.aar"))
+
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.junit)

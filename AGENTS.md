@@ -4,18 +4,20 @@ Native Android app (Kotlin + Jetpack Compose) that connects **directly over BLE*
 radio (target: LILYGO T-Beam Supreme) and shows the mesh NodeDB with live positions. The long-term
 goal is to show Meshtastic node locations in OsmAnd.
 
-## Current phase: Phase 1 (BLE → NodeDB → simple UI) — done
-Tested on a real phone (OUKITEL K10000 Max, Android 7.0) connected to the T-Beam: BLE connect, NodeDB,
-positions and altitude work. Next phase is OsmAnd integration.
-**Do not start OsmAnd integration** (or any later-phase work) unless the user explicitly asks; when
-asked, research the current OsmAnd third-party API first instead of assuming old APIs.
+## Phases
+- **Phase 1 (BLE → NodeDB → simple UI): done.** Tested on a real phone (OUKITEL K10000 Max, Android 7.0)
+  with the T-Beam and a second node: BLE connect, NodeDB, positions and altitude all work.
+- **Phase 2 (nodes on the OsmAnd map): in progress.**
+  - Done and tested on the phone (free OsmAnd): the bridge shows nodes on the map and updates them live while MeshAnd runs.
+  - Next, only when the user asks: keep the link alive while MeshAnd is in the background (a foreground service).
+
 The user runs the app from Android Studio (Play button); don't install/launch it via adb unless asked.
 
 Out of scope until asked:
-- OsmAnd / AIDL, maps
 - MQTT, backend, database, auth
 - messaging, waypoints, telemetry history
-- background service, auto-start, reconnection logic, fancy UI
+- background/foreground service, auto-start, reconnection logic, fancy UI
+- sending our own position or other data to the mesh (the app is read-only toward the radio)
 
 Keep the architecture simple: no DI framework, no extra Clean Architecture layers.
 
@@ -43,7 +45,9 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - `data/meshtastic/MeshtasticMapper.kt`: protobuf `NodeInfo` / `MeshPacket` → `MeshNode` / `LiveUpdate`, and the merge of the two. Pure functions, unit-tested.
 - `data/meshtastic/InMemoryStorageProvider.kt`: the SDK requires a `StorageProvider`. This is an in-memory one, so there is no database.
 - `data/repository/NodeRepository.kt`: combines SDK `nodes` (the NodeDB) with live `packets` into `StateFlow<List<MeshNode>>`.
-- `domain/model/`: app-owned models (`MeshNode`, `DiscoveredRadio`, `ConnectionStatus`). The UI must never see SDK or protobuf types.
+- `data/osmand/OsmAndBridge.kt`: binds to OsmAnd's AIDL V2 service and keeps one custom layer of nodes in sync. It throttles to 1 push/s, re-sends everything every 30 s, and makes binder calls on a single IO thread.
+- `data/osmand/OsmAndMapper.kt`: `MeshNode` → `MapPointSpec` (pure, unit-tested).
+- `domain/model/`: app-owned models (`MeshNode`, `DiscoveredRadio`, `ConnectionStatus`, `OsmAndStatus`). The UI must never see SDK or protobuf types.
 - `MainViewModel.kt` (AndroidViewModel), `MainActivity.kt`, `BluetoothPermissions.kt`
 - `ui/connection/`, `ui/nodes/`
 
@@ -61,9 +65,18 @@ adb logcat -s MeshAnd MeshAnd/SDK
   - A battery value over 100 means externally powered.
 - The SDK source jars can be downloaded from Maven Central to check the API before relying on it.
 
+## OsmAnd API facts (verified against the 5.4 AAR, 2026-10-01)
+- **API:** AIDL **V2** (`net.osmand.aidlapi`). Bind `Intent("net.osmand.aidl.OsmandAidlServiceV2").setPackage(pkg)`. Don't use V1 (`net.osmand.aidl`).
+- **Packages:** `net.osmand` (free, installed on the test phone), `net.osmand.plus`, `net.osmand.dev`, `net.osmand.huawei`. The API works in the free app.
+- **Library:** `net.osmand:android-aidl-lib` from OsmAnd's Ivy repo (`builder.osmand.net/ivy`), not Maven Central. It's vendored as `app/libs/osmand-aidl-lib-5.4.aar`.
+- **Allow step:** since OsmAnd 5.3, a new client app is **disabled** until the user enables it in OsmAnd → Menu → Plugins. Until then every call returns false, and `OsmAndStatus.NotAllowed` tells the user.
+- **Layers are in-memory in OsmAnd.** Re-add the layer when `updateMapLayer` returns false.
+- **Batch updates don't delete.** `updateMapLayer` only adds or replaces points; call `removeMapPoint` for nodes that are gone.
+- **Android 7:** OsmAnd 5.4.x still has minSdk 24, but a future release may drop Android 7.
+
 ## Rules
 - Never log channel PSKs, keys, `configBundle`, or `channels`. Keep SDK protocol-payload logging off.
-- Log tags: `MeshAnd` for the app, `MeshAnd/SDK` for SDK messages.
+- Log tags: `MeshAnd` for the app, `MeshAnd/SDK` for SDK messages, `MeshAnd/OsmAnd` for the OsmAnd bridge.
 
 ## graphify
 

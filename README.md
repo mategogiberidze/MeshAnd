@@ -50,9 +50,28 @@ Or open the folder in Android Studio and press Run with the phone selected.
 
 If pairing gets stuck, remove the radio under Android Settings → Bluetooth → the radio → Forget, then connect again.
 
+## Showing nodes on OsmAnd (Phase 2)
+MeshAnd puts every node that has a position on the OsmAnd map as a custom layer, "Meshtastic nodes", and keeps it updated as positions arrive. It uses OsmAnd's official API for other apps (AIDL V2, `net.osmand.aidlapi`). This works with the free OsmAnd from Google Play, OsmAnd+, and the F-Droid build.
+
+1. Connect to the radio as usual. On the nodes screen, turn on **Show on OsmAnd**.
+2. **First time only:** since OsmAnd 5.3, a new app is blocked until you allow it. The card will say *"OsmAnd is blocking MeshAnd"*. Open **OsmAnd → Menu → Plugins**, switch **MeshAnd** on, and return to MeshAnd. Within about 30 s the card shows *"Showing N node(s) on the map"*.
+3. Switch to OsmAnd and you'll see the nodes:
+   - **Your own radio:** blue.
+   - **Other nodes:** orange.
+   - **Stale nodes:** greyed out. A node goes stale after 30 min without being heard.
+   - **Details:** tap a node to see altitude, battery, SNR, hops and last seen.
+4. **Show on OsmAnd** on a node card opens OsmAnd centred on that node.
+
+Limitations:
+- Updates are sent at most once per second, and the whole layer is re-sent every 30 s. OsmAnd forgets custom layers when it restarts, so the re-send restores them.
+- The layer is removed when you switch the bridge off. Nodes disappear from the map when MeshAnd disconnects from the radio.
+- It only works while MeshAnd's process is alive. There is no background service yet.
+
+The OsmAnd client library is vendored in `app/libs/`; see `app/libs/README.md` for details.
+
 ## Logcat
 ```bash
-adb logcat -s MeshAnd MeshAnd/SDK             # app + Meshtastic SDK logs
+adb logcat -s MeshAnd MeshAnd/SDK MeshAnd/OsmAnd   # app + Meshtastic SDK + OsmAnd bridge logs
 adb logcat -s MeshAnd:I MeshAnd/SDK:I         # less noise
 adb logcat | grep -iE "bluetooth|BtGatt|bt_btif|MeshAnd"   # include Android BLE stack
 adb shell dumpsys bluetooth_manager | grep -iA3 bonded     # bond state

@@ -14,7 +14,7 @@ object BluetoothPermissions {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             listOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
         } else {
-            // API 26–30: BLUETOOTH/BLUETOOTH_ADMIN are install-time; scanning needs fine location.
+            // API 24–30: BLUETOOTH/BLUETOOTH_ADMIN are install-time; scanning needs fine location.
             listOf(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 

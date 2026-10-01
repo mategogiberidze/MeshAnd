@@ -10,6 +10,7 @@ meshtasticSdk = "0.1.0"
 # Same Kable version the Meshtastic SDK 0.1.0 BLE transport is built against.
 kable = "0.44.1"
 junit = "4.13.2"
+desugarJdkLibs = "2.1.5"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -25,6 +26,7 @@ meshtastic-sdk-core = { module = "org.meshtastic:sdk-core", version.ref = "mesht
 meshtastic-sdk-transport-ble = { module = "org.meshtastic:sdk-transport-ble", version.ref = "meshtasticSdk" }
 kable-core = { module = "com.juul.kable:kable-core", version.ref = "kable" }
 junit = { module = "junit:junit", version.ref = "junit" }
+desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

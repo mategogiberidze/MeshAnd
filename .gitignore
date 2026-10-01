@@ -11,3 +11,9 @@ build/
 
 # graphify knowledge graph (rebuilt locally by the post-commit hook)
 graphify-out/
+
+# Local Claude Code settings
+.claude/
+
+# Local Codex settings
+.codex/

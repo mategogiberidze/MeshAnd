@@ -27,7 +27,7 @@ export PATH="$HOME/Library/Android/sdk/platform-tools:$PATH"
 adb logcat -s MeshAnd MeshAnd/SDK
 ```
 - The emulator has no real Bluetooth, so BLE must be tested on a physical phone.
-- Toolchain: AGP 9.4.1 (built-in Kotlin), Kotlin 2.4.20, Gradle 9.8.0, compileSdk 37, targetSdk 36, minSdk 26.
+- Toolchain: AGP 9.4.1 (built-in Kotlin), Kotlin 2.4.20, Gradle 9.8.0, compileSdk 37, targetSdk 36, minSdk 24 (Android 7; Meshtastic SDK minSdk 26 overridden in the manifest, core library desugaring on).
 - Versions live in `gradle/libs.versions.toml`.
 
 ## Architecture (`app/src/main/java/com/meshand/app/`)

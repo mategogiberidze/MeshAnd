@@ -9,7 +9,9 @@ android {
 
     defaultConfig {
         applicationId = "com.meshand.app"
-        minSdk = 26
+        // Android 7.0. The Meshtastic SDK AARs declare minSdk 26, but their bytecode only uses
+        // APIs available on 24 (BLE goes through Kable, minSdk 21); see the manifest override.
+        minSdk = 24
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0-phase1"
@@ -24,6 +26,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // java.time (Instant, Duration) and kotlinx-datetime need API 26 without desugaring.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     buildFeatures {
@@ -50,6 +54,8 @@ dependencies {
     implementation(libs.meshtastic.sdk.core)
     implementation(libs.meshtastic.sdk.transport.ble)
     implementation(libs.kable.core)
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.junit)
 }

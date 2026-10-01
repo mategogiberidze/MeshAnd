@@ -18,7 +18,7 @@ T-Beam Supreme ──BLE──▶ MeshtasticClient (Kable scan + bonding)
 - Official Meshtastic SDK [`org.meshtastic:sdk-core` + `sdk-transport-ble` **0.1.0**](https://github.com/meshtastic/meshtastic-sdk).
   It is pre-1.0 and GPL-3.0.
 - Kable 0.44.1, the same BLE library the SDK uses, for scanning.
-- Toolchain: AGP 9.4.1, Kotlin 2.4.20, Gradle 9.8.0, compileSdk 37, minSdk 26.
+- Toolchain: AGP 9.4.1, Kotlin 2.4.20, Gradle 9.8.0, compileSdk 37, minSdk 24 (Android 7.0; the SDK declares 26 but works on 24, see the manifest override).
 
 ## Build & run
 You need Android Studio (its bundled JBR works as the JDK) and a physical phone with USB debugging enabled.
@@ -37,7 +37,7 @@ Or open the folder in Android Studio and press Run with the phone selected.
 | Android | Runtime permissions | Notes |
 |---|---|---|
 | 12+ (API 31+) | `BLUETOOTH_SCAN` (neverForLocation), `BLUETOOTH_CONNECT` | |
-| 8–11 (API 26–30) | `ACCESS_FINE_LOCATION` | `BLUETOOTH`/`BLUETOOTH_ADMIN` are install-time. System Location must be **on** for scans to return results. |
+| 7–11 (API 24–30) | `ACCESS_FINE_LOCATION` | `BLUETOOTH`/`BLUETOOTH_ADMIN` are install-time. System Location must be **on** for scans to return results. |
 
 ## Testing with a T-Beam Supreme
 1. Make sure the radio is **not connected to any other phone or app**, because Meshtastic accepts one BLE client at a time. Disconnect it in the official app, or turn off Bluetooth on the other phone.

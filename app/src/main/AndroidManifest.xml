@@ -2,7 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Android 8–11 (API 26–30): legacy Bluetooth permissions + location for BLE scanning. -->
+    <!-- Meshtastic SDK 0.1.0 declares minSdk 26 but uses no API above 24 in its bytecode. -->
+    <uses-sdk tools:overrideLibrary="org.meshtastic.sdk, org.meshtastic.sdk.transport.ble" />
+
+    <!-- Android 7–11 (API 24–30): legacy Bluetooth permissions + location for BLE scanning. -->
     <uses-permission
         android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />

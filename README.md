@@ -42,6 +42,26 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 # → app/build/outputs/apk/release/app-release.apk
 ```
 
+**Publishing through GitHub (recommended)**
+GitHub Actions builds and signs the APK and attaches it to a GitHub Release.
+- `ci.yml` runs the tests, lint and a debug build on every push to `main` and on pull requests.
+- `release.yml` runs when you push a version tag.
+
+*One-time setup:* store the signing key as repository secrets. Run these from the project folder; they read the local files, so the secrets never appear on screen:
+```bash
+base64 -i signing/meshand-release.jks | gh secret set MESHAND_KEYSTORE_BASE64 --repo mategogiberidze/MeshAnd
+```
+```bash
+grep '^storePassword=' keystore.properties | cut -d= -f2- | tr -d '\n' | gh secret set MESHAND_KEYSTORE_PASSWORD --repo mategogiberidze/MeshAnd
+```
+
+*Each release:*
+1. Bump `versionCode` and `versionName` in `app/build.gradle.kts`, then commit and push.
+2. Tag the version and push the tag: `git tag v0.4.1 && git push origin v0.4.1`. The tag must equal `v` + `versionName`, or the workflow stops.
+3. When the workflow finishes, the GitHub **Releases** page has `MeshAnd-0.4.1.apk` (plus a `.sha256`) to download.
+
+The repository is private, so only people with access to it can download Release files. Make the repo public, or add teammates as collaborators.
+
 **Signing**
 - The key is `signing/meshand-release.jks` and its passwords are in `keystore.properties`. Both are gitignored and must never be committed.
 - **Back them up together, somewhere safe.** Android only installs an update over an existing copy if it was signed with the same key. Lose the key and every teammate has to uninstall before installing a new version.

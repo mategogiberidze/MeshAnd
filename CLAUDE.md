@@ -45,7 +45,9 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - Versions live in `gradle/libs.versions.toml`.
 - **App version:** `versionCode` / `versionName` in `app/build.gradle.kts` (currently 4 / 0.4.0). Bump both for every APK handed out.
 - **Release:** `./gradlew :app:assembleRelease` signs with `signing/meshand-release.jks`, using the passwords in `keystore.properties`. Both are gitignored: **never commit them, never print the passwords.** If the properties file is missing, the release build is unsigned.
-- **Remote:** `origin` is `git@github.com:mategogiberidze/MeshAnd.git` (branch `main`).
+- **Remote:** `origin` is `git@github.com:mategogiberidze/MeshAnd.git` (branch `main`, private repo).
+- **CI:** `.github/workflows/ci.yml` runs tests, lint and a debug build on pushes to `main` and on PRs.
+- **Releases:** `.github/workflows/release.yml` runs on a `v*` tag. It requires the tag to equal `versionName`, signs using the secrets `MESHAND_KEYSTORE_BASE64` and `MESHAND_KEYSTORE_PASSWORD`, and publishes `MeshAnd-<version>.apk` to GitHub Releases.
 
 ## Architecture (`app/src/main/java/com/meshand/app/`)
 - `MeshAndApp.kt`: the `Application` class. Owns `AppGraph` (settings, client, repository, OsmAnd bridge) for the whole process, wired by hand.

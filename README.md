@@ -92,5 +92,8 @@ repository are in [AGENTS.md](AGENTS.md).
   possible.
 - The diagram above was made with [Archify](https://github.com/tt-a1i/archify).
 
-MeshAnd uses the Meshtastic SDK, which is licensed under GPL-3.0, so MeshAnd's own source has to
-be shared under a GPL-3.0-compatible licence when the app is distributed.
+## License
+
+MeshAnd is free software under the [GNU General Public License v3.0](LICENSE). It builds on the
+GPL-3.0 Meshtastic SDK. You can use, change and share it, as long as anything you distribute
+based on it stays under the GPL with its source available.

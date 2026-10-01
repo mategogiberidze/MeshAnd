@@ -18,9 +18,20 @@ object BluetoothPermissions {
             listOf(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
-    fun status(context: Context): Map<String, Boolean> = required.associateWith {
-        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-    }
+    /** Requested together with [required] but not needed for BLE: the connection notification. */
+    val optional: List<String> =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            listOf(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            emptyList()
+        }
+
+    fun status(context: Context): Map<String, Boolean> = required.associateWith { isGranted(context, it) }
+
+    fun optionalStatus(context: Context): Map<String, Boolean> = optional.associateWith { isGranted(context, it) }
+
+    private fun isGranted(context: Context, permission: String) =
+        ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
     /** Before Android 12, BLE scans return nothing while system Location is switched off. */
     val needsLocationServices: Boolean get() = Build.VERSION.SDK_INT < Build.VERSION_CODES.S

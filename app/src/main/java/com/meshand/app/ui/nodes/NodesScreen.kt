@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.meshand.app.domain.model.DiscoveredRadio
+import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.domain.model.MeshNode
 import com.meshand.app.domain.model.OsmAndStatus
 import kotlinx.coroutines.delay
@@ -33,13 +33,19 @@ import java.util.Locale
 
 @Composable
 fun NodesScreen(
-    radio: DiscoveredRadio,
+    status: ConnectionStatus,
     nodes: List<MeshNode>,
     osmAnd: OsmAndStatus,
     onDisconnect: () -> Unit,
     onOsmAndEnabledChange: (Boolean) -> Unit,
     onShowOnOsmAnd: (MeshNode) -> Unit,
+    onOpenTeam: () -> Unit,
 ) {
+    val radio = when (status) {
+        is ConnectionStatus.Connected -> status.radio
+        is ConnectionStatus.Reconnecting -> status.radio
+        else -> null
+    }
     // Ticks every second so "Last seen: N sec ago" stays current without new data.
     val now by produceState(Instant.now()) {
         while (true) {
@@ -59,7 +65,14 @@ fun NodesScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("Connected: ${radio.name ?: radio.address}", style = MaterialTheme.typography.titleMedium)
+                    val radioName = radio?.name ?: radio?.address ?: "radio"
+                    if (status is ConnectionStatus.Reconnecting) {
+                        Text("Reconnecting: $radioName", style = MaterialTheme.typography.titleMedium, color = Warn)
+                        Text(status.detail, style = MaterialTheme.typography.bodySmall)
+                        Text("Showing last-known positions.", style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        Text("Connected: $radioName", style = MaterialTheme.typography.titleMedium)
+                    }
                     Text(
                         "Nodes: ${nodes.size} · with position: ${nodes.count { it.hasPosition }}",
                         style = MaterialTheme.typography.bodyMedium,
@@ -69,6 +82,7 @@ fun NodesScreen(
             }
         }
         item { OsmAndCard(osmAnd, onOsmAndEnabledChange) }
+        item { OutlinedButton(onClick = onOpenTeam) { Text("Team list") } }
         items(nodes, key = { it.id }) { node ->
             NodeCard(
                 node = node,

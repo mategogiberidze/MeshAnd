@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import com.juul.kable.Peripheral
 import com.juul.kable.PlatformAdvertisement
 import com.juul.kable.Scanner
+import com.meshand.app.data.settings.AppSettings
 import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.domain.model.DiscoveredRadio
 import kotlinx.coroutines.CancellationException
@@ -20,7 +21,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,15 +46,16 @@ private const val TAG = "MeshAnd"
 private const val SDK_TAG = "MeshAnd/SDK"
 
 /**
- * Owns the BLE side of the app: scanning for Meshtastic radios, OS bonding, and the lifecycle of
- * one Meshtastic SDK [RadioClient]. Exposes app-level state ([ConnectionStatus],
- * [DiscoveredRadio]) plus the active [session] for [com.meshand.app.data.repository.NodeRepository].
+ * Owns the BLE side of the app: scanning for Meshtastic radios, OS bonding, and keeping one radio
+ * connected through Meshtastic SDK [RadioClient] sessions (with automatic reconnect). Exposes
+ * app-level state ([ConnectionStatus], [DiscoveredRadio], [activeRadio]) plus the current [session]
+ * for [com.meshand.app.data.repository.NodeRepository]. Lives for the whole process (see MeshAndApp).
  *
  * Callers must hold the Bluetooth runtime permissions before calling [startScan]/[connect]; the UI
  * gates both on [com.meshand.app.MainActivity]'s permission check.
  */
 @SuppressLint("MissingPermission")
-class MeshtasticClient(context: Context) {
+class MeshtasticClient(context: Context, private val settings: AppSettings) {
     /** All state mutations happen on the main thread; SDK/BLE work runs on their own dispatchers. */
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val appContext = context.applicationContext
@@ -69,10 +72,11 @@ class MeshtasticClient(context: Context) {
     private val _session = MutableStateFlow<RadioClient?>(null)
     val session: StateFlow<RadioClient?> = _session.asStateFlow()
 
+    /** One in-memory NodeDB store for the app's lifetime (keyed per radio by the SDK). */
+    private val storage = InMemoryStorageProvider()
+
     private var scanJob: Job? = null
     private var connectJob: Job? = null
-    private var stateJob: Job? = null
-    private var transport: BleTransport? = null
 
     fun isBluetoothEnabled(): Boolean = adapter?.isEnabled == true
 
@@ -83,7 +87,7 @@ class MeshtasticClient(context: Context) {
      * Meshtastic service UUID are reported; disable it to debug radios that don't advertise it.
      */
     fun startScan(filterByService: Boolean = true) {
-        if (scanJob?.isActive == true || _session.value != null) return
+        if (scanJob?.isActive == true || _activeRadio.value != null) return
         if (!isBluetoothEnabled()) {
             _status.value = ConnectionStatus.Error("Bluetooth is off")
             return
@@ -141,117 +145,152 @@ class MeshtasticClient(context: Context) {
 
     // ── Connection ─────────────────────────────────────────────────────────
 
+    /** The radio the user wants connected, or null when idle. Drives the foreground service. */
+    private val _activeRadio = MutableStateFlow<DiscoveredRadio?>(null)
+    val activeRadio: StateFlow<DiscoveredRadio?> = _activeRadio.asStateFlow()
+
+    /** The radio from the last session (persisted), for reconnecting without a scan. */
+    val savedRadio: DiscoveredRadio? get() = settings.savedRadio
+
+    /** On app start: reconnect to the saved radio unless the user explicitly disconnected. */
+    fun connectSavedIfWanted() {
+        val radio = settings.savedRadio ?: return
+        if (!settings.autoConnect || _activeRadio.value != null) return
+        Log.i(TAG, "Auto-connecting to saved radio ${radio.address}")
+        connect(radio)
+    }
+
     fun connect(radio: DiscoveredRadio) {
-        if (connectJob?.isActive == true || _session.value != null) {
-            Log.w(TAG, "Connect ignored: a connection is already active")
+        if (_activeRadio.value?.address == radio.address && connectJob?.isActive == true) {
+            Log.w(TAG, "Connect ignored: already connecting/connected to ${radio.address}")
             return
         }
         stopScan()
-        connectJob = scope.launch { doConnect(radio) }
-    }
-
-    private suspend fun doConnect(radio: DiscoveredRadio) {
-        Log.i(TAG, "Connection attempt: ${radio.name} ${radio.address}")
-        val device = try {
-            adapter?.getRemoteDevice(radio.address) ?: error("Bluetooth unavailable")
-        } catch (e: Exception) {
-            fail("Invalid device: ${e.message}", e)
-            return
-        }
-
-        _status.value = ConnectionStatus.Connecting(radio, "Pairing (check the radio's screen for a PIN)")
-        ensureBonded(device)
-
-        _status.value = ConnectionStatus.Connecting(radio, "Opening BLE connection")
-        val bleTransport = BleTransport(Peripheral(device), address = radio.address)
-        val client = RadioClient.Builder()
-            .transport(bleTransport)
-            .storage(InMemoryStorageProvider())
-            .logger(LogcatLogSink)
-            // Phase 1 is read-only: don't push the phone's clock to the radio on connect.
-            .autoSyncTimeOnConnect(false)
-            .build()
-        Log.i(TAG, "Meshtastic SDK RadioClient initialized for ${radio.address}")
-        transport = bleTransport
-        _session.value = client
-        stateJob = scope.launch { trackConnectionState(client, radio) }
-
-        try {
-            client.connect() // suspends until the NodeDB handshake (stage 2) completes
-            Log.i(TAG, "Connection success: ${radio.address}, own node=${client.ownNode.value?.num?.let { MeshtasticMapper.nodeNumToLong(it) }?.let { "!%08x".format(it) }}")
-        } catch (e: CancellationException) {
-            teardown()
-            throw e
-        } catch (e: Exception) {
-            teardown()
-            fail("Connection failed: ${e.message ?: e::class.simpleName}", e)
-        }
-    }
-
-    private suspend fun trackConnectionState(client: RadioClient, radio: DiscoveredRadio) {
-        var started = false
-        client.connection.collect { state ->
-            Log.d(TAG, "SDK connection state: $state")
-            when (state) {
-                is ConnectionState.Connecting -> {
-                    started = true
-                    _status.value = ConnectionStatus.Connecting(radio, "BLE connect (attempt ${state.attempt})")
-                }
-                is ConnectionState.Configuring -> {
-                    started = true
-                    val pct = (state.progress * 100).toInt()
-                    _status.value = ConnectionStatus.Connecting(radio, "Meshtastic handshake ${state.phase} ($pct%)")
-                }
-                is ConnectionState.Reconnecting -> {
-                    started = true
-                    _status.value = ConnectionStatus.Connecting(radio, "Reconnecting (attempt ${state.attempt})")
-                }
-                ConnectionState.Connected -> {
-                    started = true
-                    _status.value = ConnectionStatus.Connected(radio)
-                }
-                ConnectionState.Disconnected -> {
-                    // The initial value is Disconnected before connect() starts; ignore it.
-                    if (started && _status.value is ConnectionStatus.Connected) {
-                        Log.w(TAG, "Disconnected by radio/link: ${radio.address}")
-                        _status.value = ConnectionStatus.Error("Radio disconnected")
-                        scope.launch { teardown() }
-                    }
-                }
-            }
+        settings.savedRadio = radio
+        settings.autoConnect = true
+        val previous = connectJob
+        _activeRadio.value = radio
+        connectJob = scope.launch {
+            previous?.cancelAndJoin()
+            connectLoop(radio)
         }
     }
 
     fun disconnect() {
+        Log.i(TAG, "Disconnect requested")
+        settings.autoConnect = false
+        _activeRadio.value = null
+        val job = connectJob
+        connectJob = null
         scope.launch {
-            Log.i(TAG, "Disconnect requested")
-            connectJob?.cancel()
-            teardown()
+            job?.cancelAndJoin() // runs session teardown (non-cancellable) before returning
             _status.value = ConnectionStatus.Disconnected
         }
     }
 
-    /** Runs to completion even if the calling coroutine was cancelled. */
-    private suspend fun teardown() = withContext(NonCancellable) {
-        stateJob?.cancel()
-        stateJob = null
-        val client = _session.value
-        _session.value = null
-        if (client != null) {
-            client.disconnect() // never throws; closes transport + storage
-            Log.i(TAG, "Disconnected")
+    /**
+     * Keeps [radio] connected until [disconnect]. The SDK auto-reconnects short link drops itself;
+     * this loop covers the initial connection (e.g. radio off or out of range at app start) and
+     * sessions the SDK gives up on, retrying with backoff.
+     */
+    private suspend fun connectLoop(radio: DiscoveredRadio) {
+        val device = try {
+            adapter?.getRemoteDevice(radio.address) ?: error("Bluetooth unavailable")
+        } catch (e: Exception) {
+            fail("Invalid device: ${e.message}", e)
+            _activeRadio.value = null
+            return
         }
-        transport?.shutdown()
-        transport = null
+        Log.i(TAG, "Connection attempt: ${radio.name} ${radio.address}")
+        _status.value = ConnectionStatus.Connecting(radio, "Pairing (check the radio's screen for a PIN)")
+        ensureBonded(device)
+
+        var everConnected = false
+        var failures = 0
+        while (true) {
+            val outcome = runSession(radio, device, reconnecting = everConnected)
+            if (outcome.connected) {
+                everConnected = true
+                failures = 0
+            }
+            failures++
+            val backoff = (RETRY_BASE * (1 shl (failures - 1).coerceAtMost(4))).coerceAtMost(RETRY_MAX)
+            Log.w(TAG, "Session for ${radio.address} ended: ${outcome.reason}; retrying in $backoff")
+            val detail = "${outcome.reason}. Retrying in ${backoff.inWholeSeconds} s"
+            _status.value = if (everConnected) {
+                ConnectionStatus.Reconnecting(radio, detail)
+            } else {
+                ConnectionStatus.Connecting(radio, detail)
+            }
+            delay(backoff)
+        }
     }
 
-    /** Called when the owning ViewModel is cleared. */
-    fun close() {
-        stopScan()
-        connectJob?.cancel()
-        scope.launch {
-            teardown()
-            scope.cancel()
+    private class SessionOutcome(val connected: Boolean, val reason: String)
+
+    /** One SDK session: connect, then stay until the SDK reports the link is gone for good. */
+    private suspend fun runSession(radio: DiscoveredRadio, device: BluetoothDevice, reconnecting: Boolean): SessionOutcome {
+        if (!reconnecting) _status.value = ConnectionStatus.Connecting(radio, "Opening BLE connection")
+        val bleTransport = BleTransport(Peripheral(device), address = radio.address)
+        val client = RadioClient.Builder()
+            .transport(bleTransport)
+            .storage(storage) // shared across sessions, so a reconnect starts from the known NodeDB
+            .logger(LogcatLogSink)
+            // Read-only toward the radio: don't push the phone's clock on connect.
+            .autoSyncTimeOnConnect(false)
+            // Short link drops (walked out of range, radio rebooted) are retried by the SDK.
+            .autoReconnect(enabled = true, initialBackoff = 2.seconds, maxBackoff = 30.seconds)
+            .build()
+        Log.i(TAG, "Meshtastic SDK RadioClient initialized for ${radio.address}")
+        _session.value = client
+        val stateJob = scope.launch { trackConnectionState(client, radio, reconnecting) }
+        try {
+            client.connect() // suspends until the NodeDB handshake (stage 2) completes
+            Log.i(TAG, "Connection success: ${radio.address}, own node=${client.ownNode.value?.num?.let { "!%08x".format(MeshtasticMapper.nodeNumToLong(it)) }}")
+            client.connection.first { it is ConnectionState.Disconnected }
+            return SessionOutcome(connected = true, reason = "Radio link lost")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "Connection failed: ${radio.address}", e)
+            return SessionOutcome(connected = false, reason = "Connection failed: ${e.message ?: e::class.simpleName}")
+        } finally {
+            stateJob.cancel()
+            withContext(NonCancellable) {
+                _session.value = null
+                client.disconnect() // never throws; closes transport + storage handle
+                bleTransport.shutdown()
+                Log.i(TAG, "Session closed: ${radio.address}")
+            }
+        }
+    }
+
+    private suspend fun trackConnectionState(client: RadioClient, radio: DiscoveredRadio, reconnecting: Boolean) {
+        var wasConnected = reconnecting
+        client.connection.collect { state ->
+            Log.d(TAG, "SDK connection state: $state")
+            fun progress(detail: String) {
+                _status.value = if (wasConnected) {
+                    ConnectionStatus.Reconnecting(radio, detail)
+                } else {
+                    ConnectionStatus.Connecting(radio, detail)
+                }
+            }
+            when (state) {
+                is ConnectionState.Connecting -> progress("BLE connect (attempt ${state.attempt})")
+                is ConnectionState.Configuring ->
+                    progress("Meshtastic handshake ${state.phase} (${(state.progress * 100).toInt()}%)")
+                is ConnectionState.Reconnecting -> {
+                    Log.w(TAG, "Link lost, SDK reconnecting (attempt ${state.attempt}): ${state.cause.message}")
+                    wasConnected = true
+                    progress("Link lost, reconnecting (attempt ${state.attempt})")
+                }
+                ConnectionState.Connected -> {
+                    wasConnected = true
+                    _status.value = ConnectionStatus.Connected(radio)
+                }
+                ConnectionState.Disconnected -> Unit // handled by runSession / connectLoop
+            }
         }
     }
 
@@ -311,6 +350,8 @@ class MeshtasticClient(context: Context) {
     companion object {
         val SCAN_DURATION = 15.seconds
         val BOND_TIMEOUT = 90.seconds
+        val RETRY_BASE = 5.seconds
+        val RETRY_MAX = 60.seconds
     }
 }
 

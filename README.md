@@ -62,10 +62,29 @@ MeshAnd puts every node that has a position on the OsmAnd map as a custom layer,
    - **Details:** tap a node to see altitude, battery, SNR, hops and last seen.
 4. **Show on OsmAnd** on a node card opens OsmAnd centred on that node.
 
-Limitations:
+Notes:
 - Updates are sent at most once per second, and the whole layer is re-sent every 30 s. OsmAnd forgets custom layers when it restarts, so the re-send restores them.
-- The layer is removed when you switch the bridge off. Nodes disappear from the map when MeshAnd disconnects from the radio.
-- It only works while MeshAnd's process is alive. There is no background service yet.
+- The layer is removed when you switch the bridge off. The setting is remembered across app restarts.
+
+### Team list in OsmAnd
+MeshAnd adds two entry points inside OsmAnd:
+- **A "Meshtastic team" map widget.** It shows a group icon and the number of team members. If you don't see it, open **OsmAnd → Menu → Configure screen**, find **Meshtastic team** among the widgets, and switch it on.
+- **A "Meshtastic team" item** in OsmAnd's side menu.
+
+Both open the team list:
+- **Who's on it:** every node except your own radio.
+- **Order:** nearest first, with distance and direction measured from your T-Beam's GPS (e.g. "1.2 km NE"). Each row also shows when the member was last heard and their battery.
+- **Show on map:** jumps OsmAnd to that member.
+- **Navigate:** starts OsmAnd walking navigation from your phone's location to that member.
+
+You can also open the list from MeshAnd with **Team list** on the nodes screen.
+
+## Staying connected (field use)
+- **Background:** while a radio is connected, MeshAnd runs a foreground service with a permanent notification ("Connected to … · N nodes"). This keeps the radio link and the OsmAnd layer alive with OsmAnd in front and the screen off. The notification has a **Disconnect** button.
+- **Automatic reconnect:** if the link drops (out of range, radio rebooted), it reconnects automatically: the SDK retries quickly, then MeshAnd keeps retrying every 5–60 s. Meanwhile the last-known positions stay on the map and turn grey after 30 min.
+- **Remembers your radio:** MeshAnd reconnects to the last radio on start without scanning. Tapping **Disconnect** stops this until you connect again.
+- **Notifications on Android 13+:** MeshAnd also asks for notification permission so it can show the connection notification. The connection works without it.
+- **Aggressive phone makers:** some manufacturers still kill background apps. If the link stops with the screen off, exempt MeshAnd from battery optimisation in Android settings.
 
 The OsmAnd client library is vendored in `app/libs/`; see `app/libs/README.md` for details.
 

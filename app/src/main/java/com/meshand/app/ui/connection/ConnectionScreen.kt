@@ -59,6 +59,9 @@ fun ConnectionScreen(
                     env.permissions.forEach { (perm, granted) ->
                         StatusLine(perm.substringAfterLast('.'), granted, if (granted) "Granted" else "Denied")
                     }
+                    env.optionalPermissions.forEach { (perm, granted) ->
+                        StatusLine(perm.substringAfterLast('.') + " (optional)", granted, if (granted) "Granted" else "Denied")
+                    }
                     StatusLine("Bluetooth adapter", env.bluetoothOn, if (env.bluetoothOn) "On" else "Off")
                     env.locationServicesOn?.let { on ->
                         StatusLine("Location services (needed to scan on Android ≤ 11)", on, if (on) "On" else "Off")
@@ -85,6 +88,29 @@ fun ConnectionScreen(
                         is ConnectionStatus.Error -> Text(status.message, color = Bad)
                         ConnectionStatus.Scanning -> LinearProgressIndicator(Modifier.fillMaxWidth())
                         else -> Unit
+                    }
+                }
+            }
+        }
+
+        // ── Last radio: one-tap reconnect ──
+        state.savedRadio?.let { saved ->
+            item {
+                Card(Modifier.fillMaxWidth()) {
+                    Row(
+                        Modifier.padding(12.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Last radio", style = MaterialTheme.typography.bodySmall)
+                            Text(saved.name ?: "(unnamed)", fontWeight = FontWeight.Bold)
+                            Text(saved.address, fontFamily = FontFamily.Monospace)
+                        }
+                        Button(
+                            onClick = { onConnect(saved) },
+                            enabled = env.allPermissionsGranted && env.bluetoothOn && !busy,
+                        ) { Text("Connect") }
                     }
                 }
             }
@@ -154,5 +180,6 @@ private fun statusLabel(status: ConnectionStatus): String = when (status) {
     ConnectionStatus.Scanning -> "Scanning"
     is ConnectionStatus.Connecting -> "Connecting"
     is ConnectionStatus.Connected -> "Connected"
+    is ConnectionStatus.Reconnecting -> "Reconnecting"
     is ConnectionStatus.Error -> "Error"
 }

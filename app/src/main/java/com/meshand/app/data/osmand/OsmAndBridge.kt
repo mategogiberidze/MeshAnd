@@ -10,6 +10,7 @@ import android.os.RemoteException
 import android.util.Log
 import com.meshand.app.domain.model.MeshNode
 import com.meshand.app.domain.model.OsmAndStatus
+import com.meshand.app.ui.team.TeamActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,6 +26,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.osmand.aidlapi.IOsmAndAidlInterface
 import net.osmand.aidlapi.map.ALatLon
+import net.osmand.aidlapi.mapwidget.AMapWidget
+import net.osmand.aidlapi.mapwidget.AddMapWidgetParams
+import net.osmand.aidlapi.mapwidget.RemoveMapWidgetParams
+import net.osmand.aidlapi.mapwidget.UpdateMapWidgetParams
+import net.osmand.aidlapi.navdrawer.NavDrawerItem
+import net.osmand.aidlapi.navdrawer.SetNavDrawerItemsParams
+import net.osmand.aidlapi.navigation.NavigateParams
 import net.osmand.aidlapi.maplayer.AMapLayer
 import net.osmand.aidlapi.maplayer.AddMapLayerParams
 import net.osmand.aidlapi.maplayer.RemoveMapLayerParams
@@ -39,7 +47,9 @@ private const val TAG = "MeshAnd/OsmAnd"
 
 /**
  * Mirrors mesh nodes onto the OsmAnd map through OsmAnd's AIDL V2 API (`net.osmand.aidlapi`):
- * one custom map layer, one point per node with a known position, updated in place.
+ * one custom map layer, one point per node with a known position, updated in place; plus a
+ * "Meshtastic team" map widget (group icon + member count) and an OsmAnd side-menu item, both
+ * opening [TeamActivity] to list team members and jump to / navigate to them.
  *
  * - OsmAnd keeps custom layers in memory only, so the whole layer is re-sent on (re)connect and
  *   every [REFRESH_INTERVAL] (which also refreshes the "stale" flag).
@@ -65,11 +75,13 @@ class OsmAndBridge(context: Context) {
 
     // Only touched on binderDispatcher.
     private var sentPointIds: Set<String> = emptySet()
+    private var navDrawerRegistered = false
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             Log.i(TAG, "Connected to OsmAnd service (${name?.packageName})")
             service = IOsmAndAidlInterface.Stub.asInterface(binder)
+            scope.launch(binderDispatcher) { navDrawerRegistered = false }
             _status.value = OsmAndStatus.Connecting("Connected, sending nodes")
             syncRequests.trySend(Unit)
         }
@@ -129,10 +141,13 @@ class OsmAndBridge(context: Context) {
         scope.launch(binderDispatcher) {
             try {
                 svc?.removeMapLayer(RemoveMapLayerParams(LAYER_ID))
+                svc?.removeMapWidget(RemoveMapWidgetParams(WIDGET_ID))
+                svc?.setNavDrawerItems(SetNavDrawerItemsParams(appContext.packageName, emptyList()))
             } catch (e: Exception) {
-                Log.w(TAG, "removeMapLayer failed", e)
+                Log.w(TAG, "Removing layer/widget/menu item failed", e)
             }
             sentPointIds = emptySet()
+            navDrawerRegistered = false
         }
         unbind()
         service = null
@@ -156,6 +171,24 @@ class OsmAndBridge(context: Context) {
                 Log.i(TAG, "showMapPoint ${spec.id}: $ok")
             } catch (e: Exception) {
                 Log.w(TAG, "showMapPoint failed", e)
+            }
+        }
+    }
+
+    /** Starts OsmAnd navigation from the phone's current location to [node] (walking profile). */
+    fun navigateTo(node: MeshNode) {
+        val lat = node.latitude ?: return
+        val lon = node.longitude ?: return
+        val svc = service ?: return
+        val name = node.longName ?: node.shortName ?: node.nodeIdHex
+        scope.launch(binderDispatcher) {
+            try {
+                // Start (0,0) = OsmAnd uses the phone's current location; force=false lets OsmAnd
+                // ask before replacing an existing route.
+                val ok = svc.navigate(NavigateParams(null, 0.0, 0.0, name, lat, lon, NAVIGATION_PROFILE, false, true))
+                Log.i(TAG, "navigate to ${node.nodeIdHex}: $ok")
+            } catch (e: Exception) {
+                Log.w(TAG, "navigate failed", e)
             }
         }
     }
@@ -235,12 +268,46 @@ class OsmAndBridge(context: Context) {
             }
             if (newIds != sentPointIds) Log.i(TAG, "Layer synced: ${specs.size} node(s) on the OsmAnd map")
             sentPointIds = newIds
+            pushTeamEntryPoints(svc, nodes)
             _status.value = OsmAndStatus.Showing(pkg, specs.size)
         } catch (e: RemoteException) {
             Log.w(TAG, "OsmAnd call failed; will retry on reconnect", e)
             _status.value = OsmAndStatus.Connecting("OsmAnd not responding, retrying")
         }
     }
+
+    /**
+     * The map widget (group icon, number of team members heard) and the side-menu item, both
+     * opening [TeamActivity]. Like layers, OsmAnd keeps them in memory only, so they're re-added
+     * when an update fails. Runs on [binderDispatcher].
+     */
+    private fun pushTeamEntryPoints(svc: IOsmAndAidlInterface, nodes: List<MeshNode>) {
+        val members = nodes.count { !it.isOwnNode }
+        val widget = AMapWidget(
+            WIDGET_ID,
+            TEAM_ICON, // menu icon (OsmAnd drawable name)
+            "Meshtastic team", // title in OsmAnd's widget settings
+            TEAM_ICON, // widget icon, day
+            TEAM_ICON, // widget icon, night
+            members.toString(),
+            "team",
+            WIDGET_ORDER,
+            teamIntent(),
+        )
+        if (!svc.updateMapWidget(UpdateMapWidgetParams(widget))) {
+            val added = svc.addMapWidget(AddMapWidgetParams(widget))
+            Log.i(TAG, "Team widget added: $added")
+        }
+        if (!navDrawerRegistered) {
+            val item = NavDrawerItem("Meshtastic team", TeamActivity.DEEP_LINK, TEAM_ICON)
+            navDrawerRegistered = svc.setNavDrawerItems(SetNavDrawerItemsParams(appContext.packageName, listOf(item)))
+            Log.i(TAG, "Team menu item registered: $navDrawerRegistered")
+        }
+    }
+
+    /** OsmAnd starts this with its application context, so it must be a new task. */
+    private fun teamIntent() = Intent(appContext, TeamActivity::class.java)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
     private fun MapPointSpec.toAMapPoint(): AMapPoint {
         val params = HashMap<String, String>()
@@ -262,6 +329,15 @@ class OsmAndBridge(context: Context) {
 
         /** Just below OsmAnd's own "my location" layer (6.0), above favourites (4.0). */
         const val LAYER_Z_ORDER = 5.5f
+
+        const val WIDGET_ID = "meshand_team"
+        const val WIDGET_ORDER = 100
+
+        /** OsmAnd built-in drawable (OsmAnd/res/drawable/ic_action_group2.xml, present in 5.4). */
+        const val TEAM_ICON = "ic_action_group2"
+
+        /** OsmAnd routing profile key used for "Navigate" to a teammate. */
+        const val NAVIGATION_PROFILE = "pedestrian"
 
         val MIN_PUSH_INTERVAL = 1.seconds
         val REFRESH_INTERVAL = 30.seconds

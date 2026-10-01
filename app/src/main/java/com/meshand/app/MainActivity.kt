@@ -1,5 +1,6 @@
 package com.meshand.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.ui.connection.ConnectionScreen
 import com.meshand.app.ui.nodes.NodesScreen
+import com.meshand.app.ui.team.TeamActivity
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -24,31 +26,36 @@ class MainActivity : ComponentActivity() {
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             viewModel.refreshEnvironment()
+            viewModel.autoConnect()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (savedInstanceState == null) viewModel.autoConnect()
         setContent {
             MaterialTheme {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
                     Column(Modifier.padding(padding).fillMaxSize()) {
                         val status = state.status
-                        if (status is ConnectionStatus.Connected) {
+                        if (status is ConnectionStatus.Connected || status is ConnectionStatus.Reconnecting) {
                             NodesScreen(
-                                radio = status.radio,
+                                status = status,
                                 nodes = state.nodes,
                                 osmAnd = state.osmAnd,
                                 onDisconnect = viewModel::disconnect,
                                 onOsmAndEnabledChange = viewModel::setOsmAndEnabled,
                                 onShowOnOsmAnd = viewModel::showOnOsmAnd,
+                                onOpenTeam = { startActivity(Intent(this@MainActivity, TeamActivity::class.java)) },
                             )
                         } else {
                             ConnectionScreen(
                                 state = state,
                                 onRequestPermissions = {
-                                    permissionLauncher.launch(BluetoothPermissions.required.toTypedArray())
+                                    permissionLauncher.launch(
+                                        (BluetoothPermissions.required + BluetoothPermissions.optional).toTypedArray(),
+                                    )
                                 },
                                 onStartScan = viewModel::startScan,
                                 onStopScan = viewModel::stopScan,

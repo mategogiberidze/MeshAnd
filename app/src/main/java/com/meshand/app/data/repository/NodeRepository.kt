@@ -26,7 +26,7 @@ private const val TAG = "MeshAnd"
 /**
  * Maintains the app's live node list for the current radio session.
  *
- * Two inputs are combined:
+ * Lives for the whole process. Two inputs are combined:
  *  - [RadioClient.nodes]: the SDK's NodeDB (full snapshot at handshake, then deltas for
  *    unsolicited NodeInfo frames and telemetry merges);
  *  - [RadioClient.packets]: live mesh packets, from which we take position, names,
@@ -48,11 +48,22 @@ class NodeRepository(
         }.stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     init {
+        // Nodes survive disconnects and reconnects (last-known positions stay on the map, going
+        // stale with time); they are only cleared when the user switches to a different radio.
+        scope.launch {
+            var lastRadioAddress: String? = null
+            client.activeRadio.collect { radio ->
+                if (radio != null && lastRadioAddress != null && radio.address != lastRadioAddress) {
+                    Log.i(TAG, "Different radio selected; clearing node list")
+                    baseNodes.value = emptyMap()
+                    liveUpdates.value = emptyMap()
+                    ownNodeId.value = null
+                }
+                if (radio != null) lastRadioAddress = radio.address
+            }
+        }
         scope.launch {
             client.session.collectLatest { session ->
-                baseNodes.value = emptyMap()
-                liveUpdates.value = emptyMap()
-                ownNodeId.value = null
                 if (session != null) observe(session)
             }
         }
@@ -62,7 +73,7 @@ class NodeRepository(
     private suspend fun observe(session: RadioClient) = kotlinx.coroutines.coroutineScope {
         launch {
             session.ownNode.collect { info ->
-                ownNodeId.value = info?.let { MeshtasticMapper.nodeNumToLong(it.num) }
+                if (info != null) ownNodeId.value = MeshtasticMapper.nodeNumToLong(info.num)
             }
         }
         launch {
@@ -99,6 +110,12 @@ class NodeRepository(
     private fun onNodeChange(change: NodeChange) {
         when (change) {
             is NodeChange.Snapshot -> {
+                // A new session first emits the SDK's (still empty) map before the handshake;
+                // keep the last-known nodes until the radio sends its real NodeDB.
+                if (change.nodes.isEmpty()) {
+                    Log.d(TAG, "Empty NodeDB snapshot ignored (session starting)")
+                    return
+                }
                 val mapped = change.nodes.values.mapNotNull(::mapSafely).associateBy { it.id }
                 Log.i(TAG, "NodeDB received: ${change.nodes.size} node(s), ${mapped.values.count { it.hasPosition }} with position")
                 baseNodes.value = mapped

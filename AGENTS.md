@@ -7,16 +7,20 @@ goal is to show Meshtastic node locations in OsmAnd.
 ## Phases
 - **Phase 1 (BLE → NodeDB → simple UI): done.** Tested on a real phone (OUKITEL K10000 Max, Android 7.0)
   with the T-Beam and a second node: BLE connect, NodeDB, positions and altitude all work.
-- **Phase 2 (nodes on the OsmAnd map): in progress.**
-  - Done and tested on the phone (free OsmAnd): the bridge shows nodes on the map and updates them live while MeshAnd runs.
-  - Next, only when the user asks: keep the link alive while MeshAnd is in the background (a foreground service).
+- **Phase 2 (nodes on the OsmAnd map): done and tested** on the phone with the free OsmAnd. The bridge shows nodes on the map and updates them live.
+- **Phase 3 ("field-ready" + team list in OsmAnd): done and tested on the phone.**
+  - Foreground service that keeps the link alive.
+  - Auto-reconnect.
+  - Last-known positions kept across reconnects.
+  - Remembers the radio and auto-connects on start.
+  - OsmAnd "Meshtastic team" map widget and side-menu item, opening `TeamActivity`: members sorted by distance, with Show on map / Navigate.
 
 The user runs the app from Android Studio (Play button); don't install/launch it via adb unless asked.
 
 Out of scope until asked:
 - MQTT, backend, database, auth
 - messaging, waypoints, telemetry history
-- background/foreground service, auto-start, reconnection logic, fancy UI
+- auto-start at boot, fancy UI
 - sending our own position or other data to the mesh (the app is read-only toward the radio)
 
 Keep the architecture simple: no DI framework, no extra Clean Architecture layers.
@@ -36,17 +40,25 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - Versions live in `gradle/libs.versions.toml`.
 
 ## Architecture (`app/src/main/java/com/meshand/app/`)
+- `MeshAndApp.kt`: the `Application` class. Owns `AppGraph` (settings, client, repository, OsmAnd bridge) for the whole process, wired by hand.
+- `service/MeshConnectionService.kt`: foreground service (`connectedDevice` type). It runs while `client.activeRadio != null`, shows the status notification with a Disconnect action, and is sticky (reconnects to the saved radio after a restart).
+- `data/settings/AppSettings.kt`: SharedPreferences for the saved radio, the auto-connect flag and the OsmAnd-enabled flag. No secrets are stored.
 - `data/meshtastic/MeshtasticClient.kt`:
   - Kable BLE scan (filtered on `BleConstants.MESH_SERVICE_UUID`)
   - OS bonding (`createBond` + broadcast)
-  - SDK `RadioClient` lifecycle
+  - `connectLoop`: retries the initial connection with 5–60 s backoff, uses SDK `autoReconnect` for link drops, and starts a fresh session if the SDK gives up.
   - SDK log → Logcat sink
   - Owns its own Main-thread scope.
+  - Shares one `InMemoryStorageProvider` across sessions.
 - `data/meshtastic/MeshtasticMapper.kt`: protobuf `NodeInfo` / `MeshPacket` → `MeshNode` / `LiveUpdate`, and the merge of the two. Pure functions, unit-tested.
 - `data/meshtastic/InMemoryStorageProvider.kt`: the SDK requires a `StorageProvider`. This is an in-memory one, so there is no database.
 - `data/repository/NodeRepository.kt`: combines SDK `nodes` (the NodeDB) with live `packets` into `StateFlow<List<MeshNode>>`.
+  - Nodes survive reconnects; they're cleared only when switching to a different radio.
+  - Empty SDK snapshots at session start are ignored.
 - `data/osmand/OsmAndBridge.kt`: binds to OsmAnd's AIDL V2 service and keeps one custom layer of nodes in sync. It throttles to 1 push/s, re-sends everything every 30 s, and makes binder calls on a single IO thread.
 - `data/osmand/OsmAndMapper.kt`: `MeshNode` → `MapPointSpec` (pure, unit-tested).
+- `OsmAndBridge` also manages the team map widget (icon `ic_action_group2`, an OsmAnd built-in drawable), the side-menu item (`meshand://team`), and `navigateTo` (OsmAnd `navigate`, `pedestrian` profile).
+- `ui/team/`: `TeamActivity` and `teamMembers()`, which sorts by distance from the own radio (pure, tested). `domain/Geo.kt` does distance, bearing and formatting (tested).
 - `domain/model/`: app-owned models (`MeshNode`, `DiscoveredRadio`, `ConnectionStatus`, `OsmAndStatus`). The UI must never see SDK or protobuf types.
 - `MainViewModel.kt` (AndroidViewModel), `MainActivity.kt`, `BluetoothPermissions.kt`
 - `ui/connection/`, `ui/nodes/`
@@ -73,6 +85,8 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - **Layers are in-memory in OsmAnd.** Re-add the layer when `updateMapLayer` returns false.
 - **Batch updates don't delete.** `updateMapLayer` only adds or replaces points; call `removeMapPoint` for nodes that are gone.
 - **Android 7:** OsmAnd 5.4.x still has minSdk 24, but a future release may drop Android 7.
+- **Widgets:** `AMapWidget` icons are OsmAnd's own drawable names, and the click `Intent` is started from OsmAnd's app context, so it needs `FLAG_ACTIVITY_NEW_TASK`. The user may need to enable the widget in OsmAnd → Configure screen.
+- **Side-menu items:** `NavDrawerItem` uri is launched with `ACTION_VIEW`. `navigate` with a (0,0) start uses OsmAnd's current location.
 
 ## Rules
 - Never log channel PSKs, keys, `configBundle`, or `channels`. Keep SDK protocol-payload logging off.

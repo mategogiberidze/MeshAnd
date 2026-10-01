@@ -23,6 +23,12 @@
         tools:targetApi="s" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
+    <!-- Foreground service keeping the radio link alive while OsmAnd is in front. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <!-- Android 13+: needed to show the connection notification (the service runs without it). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <uses-feature
         android:name="android.hardware.bluetooth_le"
         android:required="true" />
@@ -39,6 +45,7 @@
     </queries>
 
     <application
+        android:name=".MeshAndApp"
         android:allowBackup="false"
         android:label="@string/app_name"
         android:supportsRtl="true"
@@ -51,5 +58,26 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Team list, launched by OsmAnd's map widget (explicit intent) or side-menu item
+             (meshand://team). Own task so Back returns to OsmAnd. -->
+        <activity
+            android:name=".ui.team.TeamActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data
+                    android:host="team"
+                    android:scheme="meshand" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".service.MeshConnectionService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
     </application>
 </manifest>

@@ -2,6 +2,7 @@ package com.meshand.app
 
 import android.app.Application
 import android.content.Context
+import com.meshand.app.data.alerts.SilenceAlertMonitor
 import com.meshand.app.data.meshtastic.MeshtasticClient
 import com.meshand.app.data.osmand.OsmAndBridge
 import com.meshand.app.data.repository.NodeRepository
@@ -35,9 +36,12 @@ class AppGraph(app: Application) {
     val client = MeshtasticClient(app, settings)
     val repository = NodeRepository(client, scope)
     val osmAnd = OsmAndBridge(app)
+    private val silenceAlerts = SilenceAlertMonitor(app, settings, repository.activeNodes, client.status)
 
     init {
-        scope.launch { repository.nodes.collect(osmAnd::updateNodes) }
+        // OsmAnd only gets teammates heard within the last 24 h (plus our own radio).
+        scope.launch { repository.activeNodes.collect(osmAnd::updateNodes) }
+        silenceAlerts.start(scope)
         if (settings.osmAndEnabled) osmAnd.enable()
 
         // Run the foreground service exactly while the user wants a radio connected.

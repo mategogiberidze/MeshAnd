@@ -68,7 +68,7 @@ class MeshConnectionService : Service() {
         // otherwise nothing is wanted and the collector below stops the service.
         graph.client.connectSavedIfWanted()
         scope.launch {
-            combine(graph.client.activeRadio, graph.client.status, graph.repository.nodes, graph.osmAnd.status) { radio, status, nodes, osmAnd ->
+            combine(graph.client.activeRadio, graph.client.status, graph.repository.activeNodes, graph.osmAnd.status) { radio, status, nodes, osmAnd ->
                 if (radio == null) null else Triple(status, nodes, osmAnd)
             }.conflate().collect { state ->
                 if (state == null) {

@@ -79,6 +79,38 @@ Both open the team list:
 
 You can also open the list from MeshAnd with **Team list** on the nodes screen.
 
+### Who is shown, and colours
+- **Who's shown:** only nodes heard within the **last 24 hours** appear, on the OsmAnd map, in the team list and in MeshAnd's node list. Your own radio always appears. MeshAnd's node list says how many older nodes are hidden.
+- **Colours:** each person gets a **random but fixed colour**, worked out from their node ID. The colour is the same on the map, in the team list and in MeshAnd, on every phone and after restarts. Your own radio is always blue.
+- **Grey:** a node goes grey on the map after 60 min without being heard.
+
+### Teammate alerts
+- **Who triggers them:** in the team list, switch **Alert** on for each teammate you want to watch. It's opt-in, so strangers on the public channel never trigger alerts.
+- **When:** choose how long a teammate can be silent in MeshAnd's **Teammate alerts** card: Off, 15m, 30m, 1h (default) or 2h. You get a notification once when they go silent ("Giorgi not heard for 64 min", with last-heard time and direction) and another when they're heard again.
+- **Only while connected:** alerts are checked only while MeshAnd is connected to your radio. While your own link is down, everyone looks silent, so that wouldn't mean anything.
+- **Choosing the time:** the alert time must be longer than how often teammates' radios transmit; see "Getting more live positions" below. With default Meshtastic settings, a stationary teammate may only send a position once an hour, so keep 1h or more unless the team uses a private channel with faster settings.
+
+## Getting more live positions (radio settings)
+MeshAnd only reads what the radios send. How "live" positions are depends on each teammate's Meshtastic settings, which you set in the official Meshtastic app. These values are from the firmware source as of 2026-10; the docs page lists older defaults.
+
+- **Default behaviour:** the radio takes a GPS fix every 2 min. It broadcasts its position every 60 min. "Smart" updates add a broadcast when it has moved 100 m or more, but at most every 5 min.
+- **Default public channel:** if the team uses the default public channel (LongFast with the default key), the firmware enforces at least 60 min / 5 min, whatever you configure.
+
+Recommended for a team:
+1. **Use a private team channel as the primary channel.** Give it its own name and a random key, then share it with a QR code from the Meshtastic app. This removes the public-channel limits and keeps your positions private. All team radios need the same channel and the same LoRa preset.
+2. **Position settings for trips:**
+   - smart broadcast on
+   - minimum distance 25–50 m
+   - smart minimum interval 30–60 s
+   - regular broadcast 5–10 min, as a heartbeat while standing still
+   - GPS update interval 30–60 s
+3. **Role: CLIENT** for people. Avoid TRACKER for anyone who wants to see the others: a tracker sleeps between broadcasts and doesn't receive or relay.
+4. **Airtime:** frequent positions use more airtime. A small team is fine on LongFast. Big groups may need a faster preset (e.g. MediumFast, at some cost in range), and every radio must match.
+5. **GPS reception:**
+   - give the radio a view of the sky: top of the backpack or a shoulder strap, not deep in a pocket
+   - expect the first fix outdoors to take a few minutes
+   - leave the radio on so later fixes come fast
+
 ## Staying connected (field use)
 - **Background:** while a radio is connected, MeshAnd runs a foreground service with a permanent notification ("Connected to … · N nodes"). This keeps the radio link and the OsmAnd layer alive with OsmAnd in front and the screen off. The notification has a **Disconnect** button.
 - **Automatic reconnect:** if the link drops (out of range, radio rebooted), it reconnects automatically: the SDK retries quickly, then MeshAnd keeps retrying every 5–60 s. Meanwhile the last-known positions stay on the map and turn grey after 30 min.

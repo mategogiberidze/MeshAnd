@@ -4,7 +4,10 @@ import android.util.Log
 import com.meshand.app.data.meshtastic.LiveUpdate
 import com.meshand.app.data.meshtastic.MeshtasticClient
 import com.meshand.app.data.meshtastic.MeshtasticMapper
+import com.meshand.app.domain.TeamRules
 import com.meshand.app.domain.model.MeshNode
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -46,6 +49,21 @@ class NodeRepository(
             (base.keys + live.keys).map { id -> MeshtasticMapper.merge(id, base[id], live[id], own) }
                 .sortedWith(compareByDescending<MeshNode> { it.isOwnNode }.thenByDescending { it.lastSeen })
         }.stateIn(scope, SharingStarted.Eagerly, emptyList())
+
+    /**
+     * [nodes] minus anyone not heard within [TeamRules.ACTIVE_WINDOW] (own radio always kept).
+     * Re-evaluated every minute, since nodes age out without any new data arriving.
+     */
+    val activeNodes: StateFlow<List<MeshNode>> =
+        combine(nodes, minuteTicker()) { all, now -> TeamRules.activeNodes(all, now) }
+            .stateIn(scope, SharingStarted.Eagerly, emptyList())
+
+    private fun minuteTicker() = flow {
+        while (true) {
+            emit(Instant.now())
+            delay(60_000)
+        }
+    }
 
     init {
         // Nodes survive disconnects and reconnects (last-known positions stay on the map, going

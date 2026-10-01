@@ -33,6 +33,10 @@ data class UiState(
     val osmAnd: OsmAndStatus = OsmAndStatus.Off,
     /** Last radio, offered for one-tap reconnect while not connected. */
     val savedRadio: DiscoveredRadio? = null,
+    /** Nodes known but not heard within 24 h (hidden from every list and the map). */
+    val hiddenNodeCount: Int = 0,
+    /** "Teammate not heard" alert threshold; 0 = off. */
+    val silenceAlertMinutes: Int = 0,
 )
 
 /**
@@ -49,14 +53,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val filterByService = MutableStateFlow(true)
 
     val uiState: StateFlow<UiState> = combine(
-        combine(environment, client.status, client.radios, repository.nodes, filterByService) { env, status, radios, nodes, filter ->
+        combine(environment, client.status, client.radios, repository.activeNodes, filterByService) { env, status, radios, nodes, filter ->
             UiState(env, status, radios, nodes, filter)
         },
         osmAnd.status,
         client.activeRadio,
-    ) { state, osmAndStatus, activeRadio ->
+        repository.nodes,
+        graph.settings.silenceAlertMinutes,
+    ) { state, osmAndStatus, activeRadio, allNodes, silenceMinutes ->
         state.copy(
             osmAnd = osmAndStatus,
+            hiddenNodeCount = allNodes.size - state.nodes.size,
+            silenceAlertMinutes = silenceMinutes,
             // Offer a one-tap reconnect to the last radio when idle.
             savedRadio = if (activeRadio == null) client.savedRadio else null,
         )
@@ -107,4 +115,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun showOnOsmAnd(node: MeshNode) = osmAnd.showOnMap(node)
+
+    fun setSilenceAlertMinutes(minutes: Int) = graph.settings.setSilenceAlertMinutes(minutes)
 }

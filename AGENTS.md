@@ -9,6 +9,10 @@ goal is to show Meshtastic node locations in OsmAnd.
   with the T-Beam and a second node: BLE connect, NodeDB, positions and altitude all work.
 - **Phase 2 (nodes on the OsmAnd map): done and tested** on the phone with the free OsmAnd. The bridge shows nodes on the map and updates them live.
 - **Phase 3 ("field-ready" + team list in OsmAnd): done and tested on the phone.**
+- **Phase 4 (done and tested on the phone):**
+  - 24 h activity filter (`TeamRules`, `NodeRepository.activeNodes`) for the map, team list and node list.
+  - Stable per-person colours (`NodeColors`).
+  - Opt-in "teammate not heard" alerts (`data/alerts/`, watched IDs and threshold in `AppSettings`).
   - Foreground service that keeps the link alive.
   - Auto-reconnect.
   - Last-known positions kept across reconnects.
@@ -22,6 +26,7 @@ Out of scope until asked:
 - messaging, waypoints, telemetry history
 - auto-start at boot, fancy UI
 - sending our own position or other data to the mesh (the app is read-only toward the radio)
+  - **Phone-GPS sharing for GPS-less radios: the user explicitly said "do not do this yet".**
 
 Keep the architecture simple: no DI framework, no extra Clean Architecture layers.
 
@@ -87,6 +92,12 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - **Android 7:** OsmAnd 5.4.x still has minSdk 24, but a future release may drop Android 7.
 - **Widgets:** `AMapWidget` icons are OsmAnd's own drawable names, and the click `Intent` is started from OsmAnd's app context, so it needs `FLAG_ACTIVITY_NEW_TASK`. The user may need to enable the widget in OsmAnd → Configure screen.
 - **Side-menu items:** `NavDrawerItem` uri is launched with `ACTION_VIEW`. `navigate` with a (0,0) start uses OsmAnd's current location.
+
+## Meshtastic firmware position facts (firmware master source, 2026-10)
+- **Defaults:** `default_broadcast_interval_secs` is 60 min. Smart broadcasts need at least 100 m moved and at least 5 min apart (`default_broadcast_smart_minimum_interval_secs`). The GPS update interval is 2 min.
+- **Default public channel:** on the default channel, `NodeDB.cpp` forces at least 60 min / 5 min. A private primary channel lifts this.
+- **TRACKER role:** sleeps between broadcasts, and doesn't receive or relay.
+- **Docs are behind:** meshtastic.org still lists 15 min / 30 s. Trust the firmware source.
 
 ## Rules
 - Never log channel PSKs, keys, `configBundle`, or `channels`. Keep SDK protocol-payload logging off.

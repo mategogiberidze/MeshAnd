@@ -18,6 +18,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import com.meshand.app.MainActivity
 import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.domain.model.OsmAndStatus
 import com.meshand.app.graph
+import com.meshand.app.ui.common.ColorDot
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant
@@ -47,7 +49,9 @@ class TeamActivity : ComponentActivity() {
         val graph = applicationContext.graph
         setContent {
             MaterialTheme {
-                val nodes by graph.repository.nodes.collectAsStateWithLifecycle()
+                val nodes by graph.repository.activeNodes.collectAsStateWithLifecycle()
+                val watched by graph.settings.watchedNodeIds.collectAsStateWithLifecycle()
+                val silenceMinutes by graph.settings.silenceAlertMinutes.collectAsStateWithLifecycle()
                 val status by graph.client.status.collectAsStateWithLifecycle()
                 val osmAnd by graph.osmAnd.status.collectAsStateWithLifecycle()
                 val now by produceState(Instant.now()) {
@@ -63,6 +67,9 @@ class TeamActivity : ComponentActivity() {
                         status = status,
                         osmAndReady = osmAnd is OsmAndStatus.Showing,
                         now = now,
+                        watched = watched,
+                        silenceMinutes = silenceMinutes,
+                        onWatchChange = { member, on -> graph.settings.setWatched(member.node.id, on) },
                         onShow = { graph.osmAnd.showOnMap(it.node); finish() },
                         onNavigate = { graph.osmAnd.navigateTo(it.node); finish() },
                         onOpenMeshAnd = {
@@ -88,6 +95,9 @@ private fun TeamScreen(
     status: ConnectionStatus,
     osmAndReady: Boolean,
     now: Instant,
+    watched: Set<Long>,
+    silenceMinutes: Int,
+    onWatchChange: (TeamMember, Boolean) -> Unit,
     onShow: (TeamMember) -> Unit,
     onNavigate: (TeamMember) -> Unit,
     onOpenMeshAnd: () -> Unit,
@@ -105,6 +115,14 @@ private fun TeamScreen(
                 else -> "MeshAnd isn't connected to a radio. Showing last-known positions, if any."
             }
             Text(line, style = MaterialTheme.typography.bodySmall)
+            Text(
+                "Only members heard in the last 24 h are listed. " + if (silenceMinutes > 0) {
+                    "Switch on \"Alert\" to be notified when someone isn't heard for $silenceMinutes min."
+                } else {
+                    "Teammate alerts are off (turn them on in MeshAnd)."
+                },
+                style = MaterialTheme.typography.bodySmall,
+            )
             if (!osmAndReady) {
                 Text(
                     "OsmAnd link not active: turn on \"Show on OsmAnd\" in MeshAnd to jump to members.",
@@ -122,7 +140,14 @@ private fun TeamScreen(
             }
         }
         items(members, key = { it.node.id }) { member ->
-            MemberCard(member, osmAndReady, now, onShow, onNavigate)
+            MemberCard(
+                member, osmAndReady, now,
+                watched = member.node.id in watched,
+                alertsEnabled = silenceMinutes > 0,
+                onWatchChange = { onWatchChange(member, it) },
+                onShow = onShow,
+                onNavigate = onNavigate,
+            )
         }
     }
 }
@@ -132,17 +157,26 @@ private fun MemberCard(
     member: TeamMember,
     osmAndReady: Boolean,
     now: Instant,
+    watched: Boolean,
+    alertsEnabled: Boolean,
+    onWatchChange: (Boolean) -> Unit,
     onShow: (TeamMember) -> Unit,
     onNavigate: (TeamMember) -> Unit,
 ) {
     val node = member.node
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                (node.longName ?: node.shortName ?: node.nodeIdHex) +
-                    (node.shortName?.takeIf { node.longName != null }?.let { " ($it)" } ?: ""),
-                fontWeight = FontWeight.Bold,
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                ColorDot(node)
+                Text(
+                    (node.longName ?: node.shortName ?: node.nodeIdHex) +
+                        (node.shortName?.takeIf { node.longName != null }?.let { " ($it)" } ?: ""),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                )
+                Text("Alert", style = MaterialTheme.typography.bodySmall)
+                Switch(checked = watched, onCheckedChange = onWatchChange, enabled = alertsEnabled)
+            }
             Text(
                 listOfNotNull(
                     member.distanceText ?: if (node.hasPosition) "distance unknown" else "no position yet",

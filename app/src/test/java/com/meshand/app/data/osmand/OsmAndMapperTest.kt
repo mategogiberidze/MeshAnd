@@ -1,5 +1,6 @@
 package com.meshand.app.data.osmand
 
+import com.meshand.app.domain.NodeColors
 import com.meshand.app.domain.model.MeshNode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -39,7 +40,7 @@ class OsmAndMapperTest {
         assertEquals("Giorgi", spec.fullName)
         assertEquals(41.7151, spec.latitude, 0.0)
         assertEquals(44.8271, spec.longitude, 0.0)
-        assertEquals(OsmAndMapper.NODE_COLOR, spec.color)
+        assertEquals(NodeColors.colorForId(0x12345678L), spec.color)
         assertEquals(
             listOf("Altitude: 850 m", "Battery: 78%", "SNR: 7.5 dB", "Hops: 1", "Last seen: 11:59:00"),
             spec.details,
@@ -50,7 +51,7 @@ class OsmAndMapperTest {
     @Test
     fun `own node uses its own color`() {
         val spec = OsmAndMapper.toSpec(node(own = true), now, utc)!!
-        assertEquals(OsmAndMapper.OWN_NODE_COLOR, spec.color)
+        assertEquals(NodeColors.OWN, spec.color)
         assertTrue(spec.typeName.contains("this radio"))
     }
 

@@ -1,5 +1,6 @@
 package com.meshand.app.data.osmand
 
+import com.meshand.app.domain.NodeColors
 import com.meshand.app.domain.model.MeshNode
 import java.time.Duration
 import java.time.Instant
@@ -31,11 +32,11 @@ data class MapPointSpec(
 )
 
 object OsmAndMapper {
-    /** Nodes not heard from for this long are drawn as stale. */
-    val STALE_AFTER: Duration = Duration.ofMinutes(30)
-
-    const val OWN_NODE_COLOR: Int = 0xFF1E88E5.toInt() // blue
-    const val NODE_COLOR: Int = 0xFFF4511E.toInt() // orange
+    /**
+     * Nodes not heard from for this long are drawn greyed out. One hour matches the firmware's
+     * minimum position interval on the default public channel, so idle teammates don't flicker.
+     */
+    val STALE_AFTER: Duration = Duration.ofMinutes(60)
 
     private val timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.US)
     private val dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.US)
@@ -60,7 +61,7 @@ object OsmAndMapper {
             shortName = label,
             fullName = node.longName ?: label,
             typeName = if (node.isOwnNode) "Meshtastic · this radio (${node.nodeIdHex})" else "Meshtastic node ${node.nodeIdHex}",
-            color = if (node.isOwnNode) OWN_NODE_COLOR else NODE_COLOR,
+            color = NodeColors.colorFor(node),
             latitude = lat,
             longitude = lon,
             details = details,

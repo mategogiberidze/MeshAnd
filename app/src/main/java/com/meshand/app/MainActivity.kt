@@ -43,6 +43,9 @@ class MainActivity : ComponentActivity() {
                             NodesScreen(
                                 status = status,
                                 nodes = state.nodes,
+                                hiddenNodeCount = state.hiddenNodeCount,
+                                silenceAlertMinutes = state.silenceAlertMinutes,
+                                onSilenceAlertMinutesChange = viewModel::setSilenceAlertMinutes,
                                 osmAnd = state.osmAnd,
                                 onDisconnect = viewModel::disconnect,
                                 onOsmAndEnabledChange = viewModel::setOsmAndEnabled,

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +24,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.meshand.app.data.settings.AppSettings
 import com.meshand.app.domain.model.ConnectionStatus
+import com.meshand.app.ui.common.ColorDot
 import com.meshand.app.domain.model.MeshNode
 import com.meshand.app.domain.model.OsmAndStatus
 import kotlinx.coroutines.delay
@@ -35,6 +38,9 @@ import java.util.Locale
 fun NodesScreen(
     status: ConnectionStatus,
     nodes: List<MeshNode>,
+    hiddenNodeCount: Int,
+    silenceAlertMinutes: Int,
+    onSilenceAlertMinutesChange: (Int) -> Unit,
     osmAnd: OsmAndStatus,
     onDisconnect: () -> Unit,
     onOsmAndEnabledChange: (Boolean) -> Unit,
@@ -82,7 +88,16 @@ fun NodesScreen(
             }
         }
         item { OsmAndCard(osmAnd, onOsmAndEnabledChange) }
+        item { AlertsCard(silenceAlertMinutes, onSilenceAlertMinutesChange) }
         item { OutlinedButton(onClick = onOpenTeam) { Text("Team list") } }
+        if (hiddenNodeCount > 0) {
+            item {
+                Text(
+                    "$hiddenNodeCount node(s) not heard in the last 24 h are hidden.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
         items(nodes, key = { it.id }) { node ->
             NodeCard(
                 node = node,
@@ -93,6 +108,33 @@ fun NodesScreen(
                     null
                 },
             )
+        }
+    }
+}
+
+@Composable
+private fun AlertsCard(minutes: Int, onChange: (Int) -> Unit) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Teammate alerts", fontWeight = FontWeight.Bold)
+            Text(
+                "Notify when a teammate you switched \"Alert\" on for (in the Team list) isn't heard for:",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                AppSettings.SILENCE_MINUTE_OPTIONS.forEach { option ->
+                    val label = when {
+                        option == 0 -> "Off"
+                        option % 60 == 0 -> "${option / 60}h"
+                        else -> "${option}m"
+                    }
+                    if (option == minutes) {
+                        Button(onClick = {}) { Text(label) }
+                    } else {
+                        TextButton(onClick = { onChange(option) }) { Text(label) }
+                    }
+                }
+            }
         }
     }
 }
@@ -138,11 +180,14 @@ private fun NodeCard(node: MeshNode, now: Instant, onShowOnOsmAnd: (() -> Unit)?
     Card(Modifier.fillMaxWidth(), colors = colors) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             val title = node.longName ?: node.shortName ?: "Unknown"
-            Text(
-                title + (node.shortName?.takeIf { node.longName != null }?.let { " ($it)" } ?: "") +
-                    if (node.isOwnNode) "  (this radio)" else "",
-                fontWeight = FontWeight.Bold,
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                ColorDot(node)
+                Text(
+                    title + (node.shortName?.takeIf { node.longName != null }?.let { " ($it)" } ?: "") +
+                        if (node.isOwnNode) "  (this radio)" else "",
+                    fontWeight = FontWeight.Bold,
+                )
+            }
             Field("ID", node.nodeIdHex)
             Field(
                 "Position",

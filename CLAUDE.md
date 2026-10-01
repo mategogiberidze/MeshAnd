@@ -43,6 +43,9 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - The emulator has no real Bluetooth, so BLE must be tested on a physical phone.
 - Toolchain: AGP 9.4.1 (built-in Kotlin), Kotlin 2.4.20, Gradle 9.8.0, compileSdk 37, targetSdk 36, minSdk 24 (Android 7; Meshtastic SDK minSdk 26 overridden in the manifest, core library desugaring on).
 - Versions live in `gradle/libs.versions.toml`.
+- **App version:** `versionCode` / `versionName` in `app/build.gradle.kts` (currently 4 / 0.4.0). Bump both for every APK handed out.
+- **Release:** `./gradlew :app:assembleRelease` signs with `signing/meshand-release.jks`, using the passwords in `keystore.properties`. Both are gitignored: **never commit them, never print the passwords.** If the properties file is missing, the release build is unsigned.
+- **Remote:** `origin` is `git@github.com:mategogiberidze/MeshAnd.git` (branch `main`).
 
 ## Architecture (`app/src/main/java/com/meshand/app/`)
 - `MeshAndApp.kt`: the `Application` class. Owns `AppGraph` (settings, client, repository, OsmAnd bridge) for the whole process, wired by hand.

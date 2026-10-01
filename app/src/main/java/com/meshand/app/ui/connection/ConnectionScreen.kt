@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.meshand.app.BuildConfig
 import com.meshand.app.UiState
 import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.domain.model.DiscoveredRadio
@@ -48,7 +49,8 @@ fun ConnectionScreen(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item {
-            Text("MeshAnd — Phase 1", style = MaterialTheme.typography.headlineSmall)
+            Text("MeshAnd", style = MaterialTheme.typography.headlineSmall)
+            Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall)
         }
 
         // ── Permissions / environment ──

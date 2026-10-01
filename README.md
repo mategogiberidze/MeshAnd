@@ -33,6 +33,34 @@ adb shell am start -n com.meshand.app/.MainActivity
 ```
 Or open the folder in Android Studio and press Run with the phone selected.
 
+## Release APK for teammates
+The release build is signed with the MeshAnd release key, so teammates can install it without Android Studio.
+
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+./gradlew :app:assembleRelease
+# → app/build/outputs/apk/release/app-release.apk
+```
+
+**Signing**
+- The key is `signing/meshand-release.jks` and its passwords are in `keystore.properties`. Both are gitignored and must never be committed.
+- **Back them up together, somewhere safe.** Android only installs an update over an existing copy if it was signed with the same key. Lose the key and every teammate has to uninstall before installing a new version.
+- If `keystore.properties` is missing (for example in a fresh clone), the release APK is built unsigned. Copy `keystore.properties.example` to `keystore.properties` and fill it in.
+
+**Versions**
+- Bump `versionCode` and `versionName` in `app/build.gradle.kts` for every APK you hand out.
+- Android refuses to install a lower `versionCode` over a higher one.
+- The version is shown in MeshAnd: on the connect screen, and at the bottom of the node list.
+
+**Installing on a teammate's phone**
+1. Send them `app-release.apk` (messenger, USB, cloud drive).
+2. On the phone, open the file and allow "Install unknown apps" for the app it was opened from when Android asks.
+3. In MeshAnd, connect to their own radio and enter its PIN. In OsmAnd, turn MeshAnd on under Menu → Plugins.
+
+**Debug and release builds can't replace each other.** Android Studio's Play button installs a *debug* build signed with a different key. Uninstall MeshAnd before switching between the two. Uninstalling clears MeshAnd's settings (saved radio, alerts), but the Bluetooth pairing stays.
+
+**Licence:** MeshAnd uses the GPL-3.0 Meshtastic SDK. If you give the APK to people, they're entitled to the source code too, e.g. via this repository.
+
 ## Permissions
 | Android | Runtime permissions | Notes |
 |---|---|---|

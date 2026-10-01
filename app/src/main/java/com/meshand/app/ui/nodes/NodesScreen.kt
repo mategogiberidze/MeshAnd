@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.meshand.app.BuildConfig
 import com.meshand.app.data.settings.AppSettings
 import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.ui.common.ColorDot
@@ -108,6 +109,9 @@ fun NodesScreen(
                     null
                 },
             )
+        }
+        item {
+            Text("MeshAnd ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall)
         }
     }
 }

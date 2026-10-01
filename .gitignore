@@ -17,3 +17,7 @@ graphify-out/
 
 # Local Codex settings
 .codex/
+
+# Release signing (keep private, back up separately)
+/keystore.properties
+/signing/

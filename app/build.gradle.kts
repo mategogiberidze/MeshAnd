@@ -22,9 +22,11 @@ android {
         // APIs available on 24 (BLE goes through Kable, minSdk 21); see the manifest override.
         minSdk = 24
         targetSdk = 36
-        // Bump both for every APK handed to teammates (Android refuses to "update" to a lower code).
+        // versionName is what people see (first public release: 0.1.0). versionCode is an internal
+        // counter that must go up with every APK handed out; it stays at 4 because 0.4.0 test builds
+        // with code 4 are already installed, and Android refuses to install a lower code over them.
         versionCode = 4
-        versionName = "0.4.0"
+        versionName = "0.1.0"
     }
 
     signingConfigs {

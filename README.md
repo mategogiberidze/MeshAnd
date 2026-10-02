@@ -1,5 +1,10 @@
 # MeshAnd
 
+[![CI](https://github.com/mategogiberidze/MeshAnd/actions/workflows/ci.yml/badge.svg)](https://github.com/mategogiberidze/MeshAnd/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/mategogiberidze/MeshAnd)](https://github.com/mategogiberidze/MeshAnd/releases/latest)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
+![Platform: Android](https://img.shields.io/badge/platform-Android%207%2B-3DDC84)
+
 **See your Meshtastic team on the OsmAnd map, with no internet and no mobile coverage.**
 
 MeshAnd is a small Android app that connects to your own [Meshtastic](https://meshtastic.org)
@@ -41,6 +46,17 @@ they are and when you last heard from them. You can also ask OsmAnd to navigate 
 - **Only shows people heard in the last 24 hours**, so old nodes don't clutter the map.
 - **Only listens.** MeshAnd never sends anything to the mesh.
 
+## Android only
+
+MeshAnd is an Android app, and there are no plans for iOS. What makes it useful is drawing live
+teammates *inside* OsmAnd. That's only possible because OsmAnd for Android lets other apps add
+their own map layers. OsmAnd for iOS has no such API, and iOS doesn't let apps plug into each
+other this way.
+
+If some of your team use iPhones, they can follow everyone on the map in the official
+[Meshtastic iOS app](https://meshtastic.org/docs/software/apple/). Their radios work in the same
+mesh, and they still show up for Android users in MeshAnd.
+
 ## What you need
 
 - **An Android phone** running Android 7.0 or newer, with **OsmAnd** installed. The free
@@ -56,8 +72,9 @@ they are and when you last heard from them. You can also ask OsmAnd to navigate 
 1. **Set up the radios** with the official Meshtastic app: region, a private team channel, and
    faster position updates. The defaults only send a position about once an hour.
    [docs/radio-setup.md](docs/radio-setup.md) explains what to change and why.
-2. **Install MeshAnd** on your phone. Download the APK from this repository's **Releases** page
-   and open it on the phone. Android will ask you to allow installing apps from that source.
+2. **Install MeshAnd** on your phone. Download the APK from the
+   [latest release](https://github.com/mategogiberidze/MeshAnd/releases/latest) and open it on the
+   phone. Android will ask you to allow installing apps from that source.
 3. **Connect.** Open MeshAnd, grant the Bluetooth permission, scan, and tap your radio. On the
    first connection, type the 6-digit PIN shown on the radio's screen.
 4. **Turn on "Show on OsmAnd".** The first time, OsmAnd blocks new apps until you allow them:
@@ -78,11 +95,15 @@ connected, with a button to disconnect.
 - **Tested setup:** an OUKITEL K10000 Max (Android 7.0), a T-Beam Supreme plus a second Meshtastic node, and the free
   OsmAnd 5.4. Reports from other phones and radios are very welcome.
 
-## For developers
+## Contributing
 
-Building, project structure, logs and the release process are in
-[docs/development.md](docs/development.md). The rules and facts AI coding agents follow in this
-repository are in [AGENTS.md](AGENTS.md).
+Bug reports, test results from other phones and radios, and pull requests are all welcome. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+- **Developer docs:** building, project structure, logs and the release process are in
+  [docs/development.md](docs/development.md).
+- **Agent rules:** the rules and facts AI coding agents follow in this repository are in
+  [AGENTS.md](AGENTS.md).
 
 ## Credits
 

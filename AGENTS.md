@@ -22,6 +22,7 @@ goal is to show Meshtastic node locations in OsmAnd.
 The user runs the app from Android Studio (Play button); don't install/launch it via adb unless asked.
 
 Out of scope until asked:
+- iOS: MeshAnd is Android-only by design. OsmAnd's API for other apps exists only on Android.
 - MQTT, backend, database, auth
 - messaging, waypoints, telemetry history
 - auto-start at boot, fancy UI
@@ -45,7 +46,7 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - Versions live in `gradle/libs.versions.toml`.
 - **App version:** `versionCode` / `versionName` in `app/build.gradle.kts` (currently 4 / 0.1.0: versionName was reset to 0.1.0 for the first public release, versionCode keeps rising). Bump both for every APK handed out.
 - **Release:** `./gradlew :app:assembleRelease` signs with `signing/meshand-release.jks`, using the passwords in `keystore.properties`. Both are gitignored: **never commit them, never print the passwords.** If the properties file is missing, the release build is unsigned.
-- **Remote:** `origin` is `git@github.com:mategogiberidze/MeshAnd.git` (branch `main`, private repo).
+- **Remote:** `origin` is `git@github.com:mategogiberidze/MeshAnd.git` (branch `main`).
 - **CI:** `.github/workflows/ci.yml` runs tests, lint and a debug build on pushes to `main` and on PRs.
 - **Releases:** `.github/workflows/release.yml` runs on a `v*` tag. It requires the tag to equal `versionName`, signs using the secrets `MESHAND_KEYSTORE_BASE64` and `MESHAND_KEYSTORE_PASSWORD`, and publishes `MeshAnd-<version>.apk` to GitHub Releases.
 

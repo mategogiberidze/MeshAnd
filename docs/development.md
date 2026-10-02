@@ -1,5 +1,8 @@
 # Developing MeshAnd
 
+MeshAnd is Android-only. The OsmAnd integration uses OsmAnd's Android API (AIDL), which doesn't
+exist on iOS.
+
 ## Building
 
 Open the project in **Android Studio** and press Run with a phone connected. You need a real

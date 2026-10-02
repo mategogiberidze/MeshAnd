@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Meshtastic radio questions
+    url: https://meshtastic.org/docs/
+    about: Questions about radio settings, firmware or Meshtastic itself are best answered by the Meshtastic docs and community.

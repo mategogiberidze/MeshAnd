@@ -1,0 +1,35 @@
+name: Hardware report
+description: Tell us MeshAnd works (or doesn't) with your phone and radio
+labels: [hardware-report]
+body:
+  - type: dropdown
+    id: result
+    attributes:
+      label: Did it work?
+      options:
+        - "Yes, everything worked"
+        - "Partly (details below)"
+        - "No"
+    validations:
+      required: true
+  - type: input
+    id: phone
+    attributes:
+      label: Phone and Android version
+    validations:
+      required: true
+  - type: input
+    id: radio
+    attributes:
+      label: Radio(s) and firmware version
+    validations:
+      required: true
+  - type: input
+    id: osmand
+    attributes:
+      label: OsmAnd version and edition
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything that needed extra steps, or didn't work.

@@ -107,6 +107,54 @@ where phones have no signal.
 But during a hike or a ride you don't want to keep jumping between apps. Your map, offline tiles,
 tracks and navigation already live in OsmAnd. MeshAnd brings your friends into that map.
 
+## Built on Meshtastic and OsmAnd
+
+MeshAnd is a small bridge between two great open-source projects. All the hard work happens in
+them.
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 📡 Meshtastic
+**[meshtastic.org](https://meshtastic.org)**
+
+An open-source project that turns cheap LoRa radios into an off-grid mesh network. The radios
+pass text messages and GPS positions to each other over several kilometres, hopping through other
+radios to reach further, with no phone network or internet. Channels are encrypted, and the
+radios run for days on a battery.
+
+You set up the radios with the official Meshtastic apps (Android, iPhone, or the
+[web client](https://client.meshtastic.org)) and flash new ones with the
+[web flasher](https://flasher.meshtastic.org).
+
+[Documentation](https://meshtastic.org/docs/) ·
+[GitHub](https://github.com/meshtastic)
+
+</td>
+<td width="50%" valign="top">
+
+### 🗺️ OsmAnd
+**[osmand.net](https://osmand.net)**
+
+An open-source map and navigation app built on
+[OpenStreetMap](https://www.openstreetmap.org). It works fully offline once you've downloaded a
+region's maps, and is loved by hikers, cyclists and travellers for its detailed trails, contour
+lines, recorded tracks and turn-by-turn navigation.
+
+The free version from Google Play is all MeshAnd needs. Unlike most map apps, OsmAnd for Android
+lets other apps draw on its map, which is what makes MeshAnd possible.
+
+[Documentation](https://osmand.net/docs/intro) ·
+[GitHub](https://github.com/osmandapp/OsmAnd)
+
+</td>
+</tr>
+</table>
+
+MeshAnd is an independent project. It isn't affiliated with or endorsed by Meshtastic or OsmAnd.
+Meshtastic® is a registered trademark of Meshtastic LLC.
+
 ## What you need
 
 | | |
@@ -131,6 +179,21 @@ tracks and navigation already live in OsmAnd. MeshAnd brings your friends into t
 
 From then on, MeshAnd reconnects to your radio by itself. A small notification shows while it's
 connected, with a button to disconnect.
+
+## Releases and updates
+
+- **Where:** every version is on the
+  [Releases page](https://github.com/mategogiberidze/MeshAnd/releases) as a ready-to-install APK,
+  with notes on what changed. The full history is in [CHANGELOG.md](CHANGELOG.md).
+- **Staying up to date:** when you open MeshAnd, it checks GitHub for a newer version and shows a
+  **Download** button. Install the new APK over the old one; your radio and settings are kept. You
+  can turn the check off in **Settings → About**.
+- **Automatic updates:** with [Obtainium](https://github.com/ImranR98/Obtainium), add
+  `https://github.com/mategogiberidze/MeshAnd` and it installs new releases for you.
+- **Is the download genuine?** Every release is signed with the same key, and Android refuses an
+  update signed by anyone else. Each APK also comes with a `.sha256` file to check the download.
+- **Build it yourself:** see [docs/development.md](docs/development.md). A build you make yourself
+  is signed with a different key, so uninstall the release version before installing it.
 
 ## Good to know
 

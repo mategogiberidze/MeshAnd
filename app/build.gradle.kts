@@ -25,8 +25,8 @@ android {
         // versionName is what people see (first public release: 0.1.0). versionCode is an internal
         // counter that must go up with every APK handed out; it stays at 4 because 0.4.0 test builds
         // with code 4 are already installed, and Android refuses to install a lower code over them.
-        versionCode = 4
-        versionName = "0.1.0"
+        versionCode = 5
+        versionName = "0.2.0"
     }
 
     signingConfigs {

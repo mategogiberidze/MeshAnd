@@ -58,10 +58,11 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - The emulator has no real Bluetooth, so BLE must be tested on a physical phone.
 - Toolchain: AGP 9.4.1 (built-in Kotlin), Kotlin 2.4.20, Gradle 9.8.0, compileSdk 37, targetSdk 36, minSdk 24 (Android 7; Meshtastic SDK minSdk 26 overridden in the manifest, core library desugaring on).
 - Versions live in `gradle/libs.versions.toml`.
-- **App version:** `versionCode` / `versionName` in `app/build.gradle.kts` (currently 4 / 0.1.0: versionName was reset to 0.1.0 for the first public release, versionCode keeps rising). Bump both for every APK handed out.
+- **App version:** `versionCode` / `versionName` in `app/build.gradle.kts` (currently 5 / 0.2.0; versionName was reset to 0.1.0 for the first public release, and versionCode keeps rising). Bump both for every APK handed out.
 - **Release:** `./gradlew :app:assembleRelease` signs with `signing/meshand-release.jks`, using the passwords in `keystore.properties`. Both are gitignored: **never commit them, never print the passwords.** If the properties file is missing, the release build is unsigned.
 - **Remote:** `origin` is `git@github.com:mategogiberidze/MeshAnd.git` (branch `main`).
 - **CI:** `.github/workflows/ci.yml` runs tests, lint and a debug build on pushes to `main` and on PRs.
+- **Release notes:** `CHANGELOG.md`, one `## <version>` section per release, written for app users. The release workflow publishes that section (plus a download line and a compare link) as the GitHub Release text, and fails if it's missing. **Add the section before tagging.**
 - **Releases:** `.github/workflows/release.yml` runs on a `v*` tag. It requires the tag to equal `versionName`, signs using the secrets `MESHAND_KEYSTORE_BASE64` and `MESHAND_KEYSTORE_PASSWORD`, and publishes `MeshAnd-<version>.apk` to GitHub Releases.
 
 ## Architecture (`app/src/main/java/com/meshand/app/`)
@@ -83,10 +84,23 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - `data/osmand/OsmAndBridge.kt`: binds to OsmAnd's AIDL V2 service and keeps one custom layer of nodes in sync. It throttles to 1 push/s, re-sends everything every 30 s, and makes binder calls on a single IO thread.
 - `data/osmand/OsmAndMapper.kt`: `MeshNode` → `MapPointSpec` (pure, unit-tested).
 - `OsmAndBridge` also manages the team map widget (icon `ic_action_group2`, an OsmAnd built-in drawable), the side-menu item (`meshand://team`), and `navigateTo` (OsmAnd `navigate`, `pedestrian` profile).
-- `ui/team/`: `TeamActivity` and `teamMembers()`, which sorts by distance from the own radio (pure, tested). `domain/Geo.kt` does distance, bearing and formatting (tested).
+- `ui/team/`: `TeamActivity` and `teamMembers()`, which sorts by distance from the own radio (pure, tested). `domain/Geo.kt` does distance and its formatting (tested; no compass directions, by the user's choice).
 - `domain/model/`: app-owned models (`MeshNode`, `DiscoveredRadio`, `ConnectionStatus`, `OsmAndStatus`). The UI must never see SDK or protobuf types.
 - `MainViewModel.kt` (AndroidViewModel), `MainActivity.kt`, `BluetoothPermissions.kt`
-- `ui/connection/`, `ui/nodes/`
+- **Logo:** "Summit" (Claude Design, 2026-10-05): a mesh triangle of three white nodes with an ember map pin on top, on pine `#1F5A47`. Launcher, themed and notification icons are vector drawables in `res/`; `ic_stat_mesh` is the small glyph. The README wordmarks, a 512 px icon SVG and the GitHub social preview (`social-preview.png`, 1280×640, set by hand in the repo's Settings → Social preview) are in `docs/images/`.
+- UI: Material 3 with one app theme (`ui/theme/Theme.kt`). It has a pine primary (the logo's `#1F5A47`), light and dark schemes (Settings → Appearance: System/Light/Dark, `AppSettings.themeMode`; `MeshAndTheme` also sets the system-bar icon colours and window background), and semantic `colorScheme.good`/`warning`. **Don't hard-code colours in screens.** Shared pieces are in `ui/common/Components.kt` (`SectionCard`, `HintText`, `StatusDot`, `ChoiceRow` segmented buttons, `SwitchRow`).
+  - `ui/connection/` is the screen shown when not connected.
+  - The main screen has a bottom bar with 4 pages (`Tab` in `MainActivity`, a plain `rememberSaveable` state, no navigation library):
+    - **Radio:** `StatusPage` (link, own GPS, OsmAnd switch, Team list button, overview), or `ConnectionScreen` when not connected
+    - **Nodes:** `NodesPage`, compact cards that expand on tap, with a search box above 6 nodes
+    - **Pins:** `PinsPage`, one card per pin, with a count badge on the tab
+    - **Settings:** `ui/settings/SettingsScreen`
+    - Back from another page returns to Radio.
+  - Pages live in `ui/nodes/MainPages.kt`.
+  - `TeamActivity` (opened from OsmAnd) uses the same style:
+    - top bar: close (back to the map), connection line, and an Open MeshAnd button
+    - bottom bar with **Team** and **Pins**; Pins reuses `PinsPage`, with Navigate
+    - member cards show the distance, Show on map / Navigate, and Trail/Alert chips
 
 ## Meshtastic SDK facts (verified against the 0.1.0 sources; don't assume older APIs)
 - **Dependency:** `org.meshtastic:sdk-core` + `sdk-transport-ble` **0.1.0**. It is pre-1.0 and GPL-3.0. Repo: github.com/meshtastic/meshtastic-sdk.

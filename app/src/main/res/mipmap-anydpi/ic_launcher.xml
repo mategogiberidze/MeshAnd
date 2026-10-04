@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 7.x (API 24/25) has no adaptive icons: a round teal badge with the same artwork,
+<!-- Android 7.x (API 24/25) has no adaptive icons: a round pine badge with the same artwork,
      scaled up to fill the legacy 48dp icon. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="48dp"
@@ -12,23 +12,21 @@
     <group
         android:pivotX="54"
         android:pivotY="54"
-        android:scaleX="1.25"
-        android:scaleY="1.25">
+        android:scaleX="1.35"
+        android:scaleY="1.35">
         <path
-            android:pathData="M65.5,26.08 A23,23 0 0,1 75.61,38.13 M68,21.75 A28,28 0 0,1 80.31,36.42 M42.5,26.08 A23,23 0 0,0 32.39,38.13 M40,21.75 A28,28 0 0,0 27.69,36.42"
-            android:strokeWidth="3"
-            android:strokeColor="#FFFFFFFF"
-            android:strokeLineCap="round" />
-        <path
-            android:fillColor="#FFFFFFFF"
-            android:pathData="M54,77 L39.75,57 A18,18 0 1,1 68.25,57 Z" />
-        <path
-            android:pathData="M47,42 L61,42 L54,53 Z"
-            android:strokeWidth="2"
-            android:strokeColor="@color/ic_launcher_mesh"
+            android:pathData="M35,73L54,55L73,73Z"
+            android:fillColor="#00000000"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="5"
+            android:strokeLineCap="round"
             android:strokeLineJoin="round" />
         <path
-            android:fillColor="@color/ic_launcher_mesh"
-            android:pathData="M47,38.6a3.4,3.4 0 1,1 0,6.8a3.4,3.4 0 1,1 0,-6.8z M61,38.6a3.4,3.4 0 1,1 0,6.8a3.4,3.4 0 1,1 0,-6.8z M54,49.6a3.4,3.4 0 1,1 0,6.8a3.4,3.4 0 1,1 0,-6.8z" />
+            android:pathData="M54,55L45.3,43.7A11,11 0,1 1,62.7,43.7ZM49.5,37a4.5,4.5 0,1 0,9,0a4.5,4.5 0,1 0,-9,0Z"
+            android:fillColor="#F07B4F"
+            android:fillType="evenOdd" />
+        <path
+            android:pathData="M29.5,73a5.5,5.5 0,1 0,11,0a5.5,5.5 0,1 0,-11,0ZM67.5,73a5.5,5.5 0,1 0,11,0a5.5,5.5 0,1 0,-11,0Z"
+            android:fillColor="#FFFFFF" />
     </group>
 </vector>

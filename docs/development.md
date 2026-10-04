@@ -65,9 +65,14 @@ Releases are built and signed by GitHub Actions:
   to a GitHub Release.
 
 To publish a version:
-1. Raise `versionName`, and **always** `versionCode`, in `app/build.gradle.kts`. Commit and push.
-2. Push a tag that matches the version, for example `git tag v0.1.1 && git push origin v0.1.1`.
-3. A few minutes later, the Releases page on GitHub has `MeshAnd-0.1.1.apk`.
+1. Raise `versionName`, and **always** `versionCode`, in `app/build.gradle.kts`.
+2. Write the release notes in [CHANGELOG.md](../CHANGELOG.md) under `## <version>` (e.g.
+   `## 0.2.1`), for people using the app: what's new, what improved, anything to know when
+   updating. The release workflow publishes exactly that section as the GitHub Release text, and
+   stops if it's missing.
+3. Commit and push.
+4. Push a tag that matches the version, for example `git tag v0.2.1 && git push origin v0.2.1`.
+5. A few minutes later, the Releases page on GitHub has `MeshAnd-0.2.1.apk` with your notes.
 
 ### Signing key
 

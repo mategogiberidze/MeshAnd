@@ -90,8 +90,7 @@ class SilenceAlertMonitor(
         val heard = node.lastSeen?.atZone(ZoneId.systemDefault())?.format(timeFormat)?.let { "Last heard $it" }
         val where = if (me?.hasPosition == true && node.hasPosition) {
             val d = Geo.distanceMeters(me.latitude!!, me.longitude!!, node.latitude!!, node.longitude!!)
-            val b = Geo.bearingDegrees(me.latitude, me.longitude, node.latitude, node.longitude)
-            "last position ${Geo.formatDistance(d)} ${Geo.compassPoint(b)} of you"
+            "last position ${Geo.formatDistance(d)} away"
         } else {
             null
         }

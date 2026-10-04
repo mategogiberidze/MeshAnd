@@ -3,6 +3,7 @@ package com.meshand.app
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.meshand.app.data.settings.ThemeMode
 import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.domain.model.DiscoveredRadio
 import com.meshand.app.domain.model.MeshNode
@@ -48,9 +49,16 @@ data class UiState(
     val pins: List<Pin> = emptyList(),
     /** Size of the saved trails and pins on this phone. */
     val savedDataBytes: Long = 0,
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
 )
 
-private data class Extras(val all: List<MeshNode>, val checkForUpdates: Boolean, val pins: List<Pin>, val savedBytes: Long)
+private data class Extras(
+    val all: List<MeshNode>,
+    val checkForUpdates: Boolean,
+    val pins: List<Pin>,
+    val savedBytes: Long,
+    val themeMode: ThemeMode,
+)
 
 /**
  * Screen state only. The radio connection, node list and OsmAnd bridge live in [AppGraph]
@@ -72,14 +80,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         osmAnd.status,
         client.activeRadio,
         // All known nodes (for the hidden count), the update-check switch and pins.
-        combine(repository.nodes, graph.settings.checkForUpdates, graph.pins.pins, graph.store.sizeBytes, ::Extras),
+        combine(repository.nodes, graph.settings.checkForUpdates, graph.pins.pins, graph.store.sizeBytes, graph.settings.themeMode, ::Extras),
         combine(graph.settings.silenceAlertMinutes, graph.settings.trailMinutes, graph.settings.showOwnRadioOnMap, ::Triple),
-    ) { state, osmAndStatus, activeRadio, (all, checkForUpdates, pins, savedBytes), (silenceMinutes, trailMinutes, showOwnRadio) ->
+    ) { state, osmAndStatus, activeRadio, (all, checkForUpdates, pins, savedBytes, themeMode), (silenceMinutes, trailMinutes, showOwnRadio) ->
         val allCount = all.size
         state.copy(
             checkForUpdates = checkForUpdates,
             pins = pins,
             savedDataBytes = savedBytes,
+            themeMode = themeMode,
             trailMinutes = trailMinutes,
             showOwnRadioOnMap = showOwnRadio,
             osmAnd = osmAndStatus,
@@ -155,6 +164,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         graph.trails.clearSaved()
         graph.pins.clear()
     }
+
+    fun setThemeMode(mode: ThemeMode) = graph.settings.setThemeMode(mode)
 
     fun setCheckForUpdates(enabled: Boolean) = graph.settings.setCheckForUpdates(enabled)
 }

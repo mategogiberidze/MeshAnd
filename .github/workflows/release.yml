@@ -19,6 +19,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # all tags, for the "changes since" link in the release notes
 
       - uses: actions/setup-java@v6
         with:
@@ -39,6 +41,29 @@ jobs:
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Release notes from CHANGELOG.md
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          # The text under "## <version>" up to the next "## " heading.
+          awk -v v="$version" '/^## / { if (found) exit; if ($2 == v) { found = 1; next } } found' CHANGELOG.md > release-notes.md
+          if [ -z "$(tr -d '[:space:]' < release-notes.md)" ]; then
+            echo "::error::CHANGELOG.md has no '## $version' section. Write the release notes first."
+            exit 1
+          fi
+          previous=$(git describe --tags --abbrev=0 "$GITHUB_REF_NAME^" 2>/dev/null || true)
+          {
+            echo
+            echo "### Download"
+            echo
+            echo "Install **MeshAnd-$version.apk** below on your Android phone (Android 7 or newer)."
+            echo "The \`.sha256\` file lets you check the download."
+            if [ -n "$previous" ]; then
+              echo
+              echo "All code changes: https://github.com/$GITHUB_REPOSITORY/compare/$previous...$GITHUB_REF_NAME"
+            fi
+          } >> release-notes.md
+          cat release-notes.md
 
       - name: Restore signing key
         env:
@@ -78,7 +103,7 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             "${{ steps.apk.outputs.name }}" "${{ steps.apk.outputs.name }}.sha256" \
             --title "MeshAnd ${{ steps.version.outputs.version }}" \
-            --generate-notes
+            --notes-file release-notes.md
 
       - name: Remove signing material
         if: always()

@@ -1,5 +1,6 @@
 package com.meshand.app.ui.team
 
+import com.meshand.app.domain.Geo
 import com.meshand.app.domain.model.MeshNode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -19,8 +20,8 @@ class TeamMembersTest {
         val near = node(3, 41.7000, 44.8100) // ~830 m E
         val members = teamMembers(listOf(far, me, near))
         assertEquals(listOf(3L, 2L), members.map { it.node.id })
-        assertEquals("830 m E", members[0].distanceText)
-        assertEquals("11 km N", members[1].distanceText)
+        assertEquals("830 m", Geo.formatDistance(members[0].distanceMeters!!))
+        assertEquals("11 km", Geo.formatDistance(members[1].distanceMeters!!))
     }
 
     @Test
@@ -31,7 +32,7 @@ class TeamMembersTest {
         val newNoPos = node(4, null, null, seen = 200)
         val members = teamMembers(listOf(oldNoPos, newNoPos, withPos, me))
         assertEquals(listOf(2L, 4L, 3L), members.map { it.node.id })
-        assertNull(members[1].distanceText)
+        assertNull(members[1].distanceMeters)
     }
 
     @Test

@@ -1,17 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Status-bar icon: a node with radio waves. Must be single-colour (white on transparent). -->
+<!-- Status-bar icon (and in-app "MeshAnd" glyph): the logo's mountain mesh with the pin. Single colour, white on transparent. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M12,10a2,2 0,1 1,0 4a2,2 0,1 1,0 -4z" />
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="1.8"
-        android:strokeLineCap="round"
-        android:pathData="M8.5,8.5a5,5 0,0 0,0 7M15.5,8.5a5,5 0,0 1,0 7M5.5,5.5a9,9 0,0 0,0 13M18.5,5.5a9,9 0,0 1,0 13" />
+    android:viewportWidth="68"
+    android:viewportHeight="68">
+    <group
+        android:translateX="-20"
+        android:translateY="-20">
+        <path
+            android:pathData="M35,73L54,55L73,73Z"
+            android:fillColor="#00000000"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="6"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="M54,55L45.3,43.7A11,11 0,1 1,62.7,43.7ZM49.5,37a4.5,4.5 0,1 0,9,0a4.5,4.5 0,1 0,-9,0Z"
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd" />
+        <path
+            android:pathData="M28.5,73a6.5,6.5 0,1 0,13,0a6.5,6.5 0,1 0,-13,0ZM66.5,73a6.5,6.5 0,1 0,13,0a6.5,6.5 0,1 0,-13,0Z"
+            android:fillColor="#FFFFFF" />
+    </group>
 </vector>

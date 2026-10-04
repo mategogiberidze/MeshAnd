@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -27,13 +30,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.meshand.app.domain.PinText
 import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.graph
+import com.meshand.app.ui.theme.MeshAndTheme
 import java.util.Locale
 
 /**
@@ -49,7 +52,7 @@ class SharePinActivity : ComponentActivity() {
         val parsed = PinText.parseShared(shared)
         val graph = applicationContext.graph
         setContent {
-            MaterialTheme {
+            MeshAndTheme {
                 val status by graph.client.status.collectAsStateWithLifecycle()
                 var name by remember { mutableStateOf(parsed?.name.orEmpty()) }
                 // Off by default: only the coordinates go out unless the user ticks it.
@@ -62,10 +65,10 @@ class SharePinActivity : ComponentActivity() {
                     ) {
                         Text("Send a pin to your team", style = MaterialTheme.typography.headlineSmall)
                         if (parsed == null) {
-                            Text("No coordinates found in what was shared.", color = Warn)
+                            Text("No coordinates found in what was shared.", color = MaterialTheme.colorScheme.error)
                             Text(
                                 "In OsmAnd, tap a place on the map, then Share → MeshAnd pin.",
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.bodyMedium,
                             )
                             OutlinedButton(onClick = { finish() }) { Text("Close") }
                             return@Column
@@ -74,9 +77,15 @@ class SharePinActivity : ComponentActivity() {
                             String.format(Locale.US, "%.5f, %.5f", parsed.latitude, parsed.longitude),
                             fontFamily = FontFamily.Monospace,
                         )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = withDescription, onCheckedChange = { withDescription = it })
-                            Text("Send a description")
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp)
+                                .toggleable(withDescription, role = Role.Checkbox, onValueChange = { withDescription = it }),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(checked = withDescription, onCheckedChange = null)
+                            Text("Send a description", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 12.dp))
                         }
                         OutlinedTextField(
                             value = name,
@@ -97,14 +106,14 @@ class SharePinActivity : ComponentActivity() {
                         Text(
                             "Sent on your primary channel as a text message. Teammates with MeshAnd see it on " +
                                 "the OsmAnd map; others read it in the Meshtastic app:",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                         )
-                        Text(message, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
+                        Text(message, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodyMedium)
                         val connected = status is ConnectionStatus.Connected
                         if (!connected) {
-                            Text("MeshAnd isn't connected to your radio. Open MeshAnd and connect first.", color = Warn)
+                            Text("MeshAnd isn't connected to your radio. Open MeshAnd and connect first.", color = MaterialTheme.colorScheme.error)
                         }
-                        error?.let { Text(it, color = Warn) }
+                        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(
                                 enabled = connected,
@@ -122,9 +131,5 @@ class SharePinActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private companion object {
-        val Warn = Color(0xFFC62828)
     }
 }

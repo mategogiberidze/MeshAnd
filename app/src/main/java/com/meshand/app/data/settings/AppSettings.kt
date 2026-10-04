@@ -76,6 +76,17 @@ class AppSettings(context: Context) {
         _trailMinutes.value = minutes
     }
 
+    /** Light, dark, or follow the phone. */
+    private val _themeMode = MutableStateFlow(
+        ThemeMode.entries.firstOrNull { it.name == prefs.getString(KEY_THEME_MODE, null) } ?: ThemeMode.SYSTEM,
+    )
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
+
+    fun setThemeMode(mode: ThemeMode) {
+        prefs.edit().putString(KEY_THEME_MODE, mode.name).apply()
+        _themeMode.value = mode
+    }
+
     /** Ask GitHub for new MeshAnd releases when the app opens (the app's only internet access). */
     private val _checkForUpdates = MutableStateFlow(prefs.getBoolean(KEY_CHECK_UPDATES, true))
     val checkForUpdates: StateFlow<Boolean> = _checkForUpdates.asStateFlow()
@@ -103,6 +114,7 @@ class AppSettings(context: Context) {
         set(value) = prefs.edit().putString(KEY_DISMISSED_VERSION, value).apply()
 
     companion object {
+        private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_CHECK_UPDATES = "check_for_updates"
         private const val KEY_UPDATE_CHECKED_AT = "update_checked_at"
         private const val KEY_LATEST_VERSION = "latest_release_version"
@@ -125,3 +137,6 @@ class AppSettings(context: Context) {
         private const val KEY_OSMAND_ENABLED = "osmand_enabled"
     }
 }
+
+/** App appearance chosen in Settings. */
+enum class ThemeMode(val label: String) { SYSTEM("System"), LIGHT("Light"), DARK("Dark") }

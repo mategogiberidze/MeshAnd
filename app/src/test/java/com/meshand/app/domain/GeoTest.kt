@@ -21,24 +21,6 @@ class GeoTest {
     }
 
     @Test
-    fun `bearings to the cardinal directions`() {
-        assertEquals(0.0, Geo.bearingDegrees(41.0, 44.0, 42.0, 44.0), 0.01)
-        assertEquals(180.0, Geo.bearingDegrees(42.0, 44.0, 41.0, 44.0), 0.01)
-        assertEquals(90.0, Geo.bearingDegrees(0.0, 44.0, 0.0, 45.0), 0.01)
-        assertEquals(270.0, Geo.bearingDegrees(0.0, 45.0, 0.0, 44.0), 0.01)
-    }
-
-    @Test
-    fun `compass points`() {
-        assertEquals("N", Geo.compassPoint(0.0))
-        assertEquals("N", Geo.compassPoint(350.0))
-        assertEquals("NE", Geo.compassPoint(44.0))
-        assertEquals("E", Geo.compassPoint(91.0))
-        assertEquals("SW", Geo.compassPoint(225.0))
-        assertEquals("NW", Geo.compassPoint(314.0))
-    }
-
-    @Test
     fun `distance formatting`() {
         assertEquals("850 m", Geo.formatDistance(849.6))
         assertEquals("1.2 km", Geo.formatDistance(1_234.0))

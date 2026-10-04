@@ -69,13 +69,26 @@ position. Without the timestamp, MeshAnd can only notice this because the coordi
 changing. With it, MeshAnd shows the real GPS fix time on the map and in the team list. It costs
 4 bytes per position.
 
-**Role:** keep people on **Client**. *Tracker* sleeps between broadcasts and can't receive or
-relay, so it only suits things you just want to locate (a car, a dog), not people who need to
-see each other.
-
 **Airtime:** every position is a radio transmission. A handful of people on LongFast is fine.
 Big groups, or regions with an hourly transmit limit, may want a faster preset such as **Medium
 Fast**: less airtime per packet, somewhat less range. Change it on every radio at once.
+
+## Device role: use Client
+
+Every radio someone carries should have **Device → Role = Client**, which is the default. Choosing
+a role also changes other settings behind the scenes, and some roles quietly break live
+tracking:
+
+| Role | For a person using MeshAnd? | Why |
+|---|---|---|
+| **Client** | ✅ **Yes** | Sends its position, receives everyone else's, relays for others, and stays connected to the phone. |
+| Client Mute | ✅ OK | Like Client, but doesn't relay other radios' messages. Useful when many radios are close together. |
+| Tracker | ❌ No | Sleeps between broadcasts to save battery, so it can't receive positions or stay connected to MeshAnd. Fine for something you only want to locate, like a car or a dog. |
+| Client Hidden | ❌ No | Turns position broadcasts off, so teammates never see it move. |
+| TAK, TAK Tracker | ❌ No | Made for the ATAK app. TAK sends its position only once a day. |
+| Router, Repeater, Sensor | ❌ No | For fixed relay stations and sensors, not people. |
+
+If a teammate never moves on the map, or never appears at all, check their role first.
 
 ## Getting a good GPS fix
 

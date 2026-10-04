@@ -164,8 +164,8 @@ Meshtastic® is a registered trademark of Meshtastic LLC.
 
 ## Getting started
 
-1. **Set up the radios** with the official Meshtastic app: region, a private team channel, and
-   faster position updates. The defaults only send a position about once an hour, so read
+1. **Set up the radios** with the official Meshtastic app: region, a private team channel, role
+   **Client**, and faster position updates. The defaults only send a position about once an hour, so read
    [docs/radio-setup.md](docs/radio-setup.md) for what to change and why.
 2. **Install MeshAnd.** Download the APK from the
    [latest release](https://github.com/mategogiberidze/MeshAnd/releases/latest) and open it on
@@ -206,8 +206,10 @@ connected, with a button to disconnect.
   and only OsmAnd for Android lets other apps add map layers. iPhone users in your team can
   follow everyone in the [Meshtastic iOS app](https://meshtastic.org/docs/software/apple/). Their
   radios are part of the same mesh, so they still show up in MeshAnd.
-- **Tested setup:** an OUKITEL K10000 Max (Android 7.0), a T-Beam Supreme plus a second
-  Meshtastic node, and the free OsmAnd 5.4. Reports from other phones and radios are very welcome.
+- **Tested on:** an OUKITEL K10000 Max phone (Android 7.0) and a Ulefone RugKing Pad 2 Pro tablet
+  (Android 16), with a T-Beam Supreme plus a second Meshtastic node, and both the free OsmAnd
+  and OsmAnd Pro.
+  Reports from other phones and radios are very welcome.
 
 ## Contributing
 

@@ -5,6 +5,10 @@ radio (target: LILYGO T-Beam Supreme) and shows the mesh NodeDB with live positi
 goal is to show Meshtastic node locations in OsmAnd.
 
 ## Phases
+- **Test devices:**
+  - OUKITEL K10000 Max (Android 7.0, API 24, the minimum)
+  - Ulefone RugKing Pad 2 Pro tablet (Android 16, API 36; adb serial `8002RH1010025428`)
+  - Tested with both the free OsmAnd (`net.osmand`) and OsmAnd Pro (the paid subscription). The API works the same in both.
 - **Phase 1 (BLE → NodeDB → simple UI): done.** Tested on a real phone (OUKITEL K10000 Max, Android 7.0)
   with the T-Beam and a second node: BLE connect, NodeDB, positions and altitude all work.
 - **Phase 2 (nodes on the OsmAnd map): done and tested** on the phone with the free OsmAnd. The bridge shows nodes on the map and updates them live.
@@ -134,7 +138,11 @@ adb logcat -s MeshAnd MeshAnd/SDK
 ## Meshtastic firmware position facts (firmware master source, 2026-10)
 - **Defaults:** `default_broadcast_interval_secs` is 60 min. Smart broadcasts need at least 100 m moved and at least 5 min apart (`default_broadcast_smart_minimum_interval_secs`). The GPS update interval is 2 min.
 - **Default public channel:** on the default channel, `NodeDB.cpp` forces at least 60 min / 5 min. A private primary channel lifts this.
-- **TRACKER role:** sleeps between broadcasts, and doesn't receive or relay.
+- **Roles:** setting a role installs role defaults (`NodeDB::installRoleDefaults`).
+  - TRACKER sleeps between broadcasts, and doesn't receive or relay.
+  - CLIENT_HIDDEN sets position broadcasts to MAX_INTERVAL (effectively off).
+  - TAK sends a position once a day.
+  - People should use CLIENT (or CLIENT_MUTE); `docs/radio-setup.md` has a table.
 - **Docs are behind:** meshtastic.org still lists 15 min / 30 s. Trust the firmware source.
 
 ## Position timing (firmware `PositionModule.cpp`, checked 2026-10-04)

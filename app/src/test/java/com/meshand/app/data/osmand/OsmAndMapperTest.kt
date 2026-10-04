@@ -2,6 +2,7 @@ package com.meshand.app.data.osmand
 
 import com.meshand.app.domain.NodeColors
 import com.meshand.app.domain.model.MeshNode
+import com.meshand.app.domain.model.Pin
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -80,5 +81,17 @@ class OsmAndMapperTest {
     fun `externally powered battery`() {
         val spec = OsmAndMapper.toSpec(node().copy(batteryLevel = MeshNode.BATTERY_POWERED), now, utc)!!
         assertTrue("Battery: powered" in spec.details)
+    }
+
+    @Test
+    fun `pin is drawn in the sender's colour with who and when`() {
+        val pin = Pin("pin-1", 41.75002, 44.77124, "Camp", 0x12345678L, now.minusSeconds(600), mine = false)
+        val spec = OsmAndMapper.pinSpec(pin, node(), now, utc)
+        assertEquals("pin-1", spec.id)
+        assertEquals("Camp", spec.fullName)
+        assertEquals("Camp", spec.shortName)
+        assertEquals("Pin from Giorgi · 11:50:00", spec.typeName)
+        assertEquals(NodeColors.colorFor(node()), spec.color)
+        assertEquals("Pin from you · 11:50:00", OsmAndMapper.pinSpec(pin.copy(mine = true), null, now, utc).typeName)
     }
 }

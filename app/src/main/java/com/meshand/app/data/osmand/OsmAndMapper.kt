@@ -1,7 +1,9 @@
 package com.meshand.app.data.osmand
 
 import com.meshand.app.domain.NodeColors
+import com.meshand.app.domain.PositionAge
 import com.meshand.app.domain.model.MeshNode
+import com.meshand.app.domain.model.Pin
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -53,7 +55,14 @@ object OsmAndMapper {
             }
             node.snr?.let { add(String.format(Locale.US, "SNR: %.1f dB", it)) }
             node.hopsAway?.let { add("Hops: $it") }
-            // Absolute time: OsmAnd's menu isn't refreshed every second, so "N sec ago" would lie.
+            // Absolute times: OsmAnd's menu isn't refreshed every second, so "N sec ago" would lie.
+            val updated = PositionAge.updatedAt(node, now)
+            val reported = PositionAge.reportedAt(node, now)
+            when {
+                updated != null -> add("Position from: " + formatTime(updated, now, zone))
+                reported != null -> add("Position reported: " + formatTime(reported, now, zone))
+            }
+            if (PositionAge.isStuck(node, now)) add("GPS not updating: same position re-sent since then")
             add("Last seen: " + (node.lastSeen?.let { formatTime(it, now, zone) } ?: "unknown"))
         }
         return MapPointSpec(
@@ -66,6 +75,31 @@ object OsmAndMapper {
             longitude = lon,
             details = details,
             stale = isStale(node.lastSeen, now),
+        )
+    }
+
+    /** A shared pin, drawn as a map pin in the sender's colour. */
+    fun pinSpec(pin: Pin, sender: MeshNode?, now: Instant, zone: ZoneId = ZoneId.systemDefault()): MapPointSpec {
+        val who = when {
+            pin.mine -> "you"
+            sender != null -> sender.longName ?: sender.shortName ?: sender.nodeIdHex
+            pin.fromNodeId != null -> "!%08x".format(pin.fromNodeId)
+            else -> "a teammate"
+        }
+        val time = formatTime(pin.time, now, zone)
+        return MapPointSpec(
+            id = pin.id,
+            shortName = pin.name ?: "Pin",
+            fullName = pin.name ?: "Pin",
+            typeName = "Pin from $who · $time",
+            color = sender?.let(NodeColors::colorFor) ?: NodeColors.colorForId(pin.fromNodeId ?: 0),
+            latitude = pin.latitude,
+            longitude = pin.longitude,
+            details = listOf(
+                String.format(Locale.US, "Coordinates: %.5f, %.5f", pin.latitude, pin.longitude),
+                "Shared by $who at $time",
+            ),
+            stale = false,
         )
     }
 

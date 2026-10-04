@@ -23,21 +23,45 @@ data class LiveUpdate(
     val altitude: Int? = null,
     val shortName: String? = null,
     val longName: String? = null,
+    /** GPS fix time (`Position.timestamp`), only sent with the radio's "Timestamp" flag. */
+    val fixTime: Instant? = null,
+    val satellites: Int? = null,
+    /** When the latest position packet arrived. */
+    val positionHeardAt: Instant? = null,
+    /** When the first packet carrying the current coordinates arrived. */
+    val positionChangedAt: Instant? = null,
+    /** True once a live packet changed the coordinates (not just the first live position). */
+    val positionChangeSeen: Boolean = false,
+    /** False when the channel truncates coordinates, so GPS jitter can't be seen. */
+    val precisePosition: Boolean = true,
 ) {
     val hasPosition: Boolean get() = latitude != null && longitude != null
 
     /** Newer packet data wins; fields absent from [newer] keep their previous value. */
-    fun mergedWith(newer: LiveUpdate): LiveUpdate = LiveUpdate(
-        nodeId = nodeId,
-        heardAt = maxOf(heardAt, newer.heardAt),
-        snr = newer.snr ?: snr,
-        hopsAway = newer.hopsAway ?: hopsAway,
-        latitude = if (newer.hasPosition) newer.latitude else latitude,
-        longitude = if (newer.hasPosition) newer.longitude else longitude,
-        altitude = if (newer.hasPosition) newer.altitude else altitude,
-        shortName = newer.shortName ?: shortName,
-        longName = newer.longName ?: longName,
-    )
+    fun mergedWith(newer: LiveUpdate): LiveUpdate {
+        val moved = newer.hasPosition && hasPosition && (newer.latitude != latitude || newer.longitude != longitude)
+        return LiveUpdate(
+            nodeId = nodeId,
+            heardAt = maxOf(heardAt, newer.heardAt),
+            snr = newer.snr ?: snr,
+            hopsAway = newer.hopsAway ?: hopsAway,
+            latitude = if (newer.hasPosition) newer.latitude else latitude,
+            longitude = if (newer.hasPosition) newer.longitude else longitude,
+            altitude = if (newer.hasPosition) newer.altitude else altitude,
+            shortName = newer.shortName ?: shortName,
+            longName = newer.longName ?: longName,
+            fixTime = if (newer.hasPosition) newer.fixTime else fixTime,
+            satellites = if (newer.hasPosition) newer.satellites else satellites,
+            positionHeardAt = if (newer.hasPosition) newer.positionHeardAt else positionHeardAt,
+            positionChangedAt = when {
+                !newer.hasPosition -> positionChangedAt
+                !hasPosition || moved -> newer.positionChangedAt
+                else -> positionChangedAt
+            },
+            positionChangeSeen = positionChangeSeen || moved,
+            precisePosition = if (newer.hasPosition) newer.precisePosition else precisePosition,
+        )
+    }
 }
 
 /**
@@ -69,6 +93,9 @@ object MeshtasticMapper {
             hopsAway = info.hops_away,
             lastSeen = epochSecondsToInstant(info.last_heard),
             isOwnNode = ownNodeNum != null && info.num == ownNodeNum,
+            fixTime = position?.timestamp?.let(::epochSecondsToInstant),
+            // NodeDB positions carry the time the radio last stored them (its clock).
+            positionReportedAt = position?.takeIf { latitudeOf(it) != null }?.time?.let(::epochSecondsToInstant),
         )
     }
 
@@ -96,6 +123,7 @@ object MeshtasticMapper {
         if (packet.from == 0) return null
         val position = packet.asPosition()
         val user = packet.asNodeInfoUser()
+        val hasPosition = position != null && latitudeOf(position) != null && longitudeOf(position) != null
         return LiveUpdate(
             nodeId = nodeNumToLong(packet.from),
             heardAt = receivedAt,
@@ -107,6 +135,14 @@ object MeshtasticMapper {
             altitude = position?.altitude,
             shortName = user?.short_name?.takeIf { it.isNotBlank() },
             longName = user?.long_name?.takeIf { it.isNotBlank() },
+            // `time` is when the packet was sent, not when the GPS got the fix; `timestamp` is
+            // the fix time (only with the radio's "Timestamp" position flag).
+            fixTime = position?.timestamp?.let(::epochSecondsToInstant),
+            satellites = position?.sats_in_view?.takeIf { it > 0 },
+            positionHeardAt = receivedAt.takeIf { hasPosition },
+            positionChangedAt = receivedAt.takeIf { hasPosition },
+            // 32 bits (or 0 on old firmware) means full precision.
+            precisePosition = position?.precision_bits?.let { it == 0 || it >= 32 } ?: true,
         )
     }
 
@@ -129,11 +165,26 @@ object MeshtasticMapper {
             latitude = if (live.hasPosition) live.latitude else node.latitude,
             longitude = if (live.hasPosition) live.longitude else node.longitude,
             altitude = if (live.hasPosition) live.altitude else node.altitude,
+            fixTime = if (live.hasPosition) live.fixTime ?: node.fixTime else node.fixTime,
+            satellites = if (live.hasPosition) live.satellites else node.satellites,
+            positionReportedAt = if (live.hasPosition) live.positionHeardAt else node.positionReportedAt,
+            positionChangedAt = if (live.hasPosition) positionChangedAt(node, live) else node.positionChangedAt,
             snr = live.snr ?: node.snr,
             hopsAway = live.hopsAway ?: node.hopsAway,
             lastSeen = maxOfNullable(node.lastSeen, live.heardAt),
         )
         return merged.copy(isOwnNode = ownNodeId != null && id == ownNodeId)
+    }
+
+    /**
+     * Before any live change, compare the first live position with the radio's NodeDB: different
+     * coordinates are a change; the same ones were already known when the NodeDB entry was stored.
+     */
+    private fun positionChangedAt(base: MeshNode, live: LiveUpdate): Instant? = when {
+        !live.precisePosition -> null
+        live.positionChangeSeen || !base.hasPosition -> live.positionChangedAt
+        base.latitude != live.latitude || base.longitude != live.longitude -> live.positionChangedAt
+        else -> base.positionReportedAt
     }
 
     private fun maxOfNullable(a: Instant?, b: Instant): Instant = if (a == null || b > a) b else a

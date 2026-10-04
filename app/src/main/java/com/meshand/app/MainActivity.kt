@@ -1,6 +1,9 @@
 package com.meshand.app
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.meshand.app.domain.model.ConnectionStatus
+import com.meshand.app.ui.common.UpdateBanner
 import com.meshand.app.ui.connection.ConnectionScreen
 import com.meshand.app.ui.nodes.NodesScreen
 import com.meshand.app.ui.team.TeamActivity
@@ -36,8 +40,16 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
+                val update by applicationContext.graph.updates.available.collectAsStateWithLifecycle()
                 Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
                     Column(Modifier.padding(padding).fillMaxSize()) {
+                        update?.let {
+                            UpdateBanner(
+                                update = it,
+                                onDownload = { openUrl(it.pageUrl) },
+                                onLater = applicationContext.graph.updates::dismiss,
+                            )
+                        }
                         val status = state.status
                         if (status is ConnectionStatus.Connected || status is ConnectionStatus.Reconnecting) {
                             NodesScreen(
@@ -46,6 +58,19 @@ class MainActivity : ComponentActivity() {
                                 hiddenNodeCount = state.hiddenNodeCount,
                                 silenceAlertMinutes = state.silenceAlertMinutes,
                                 onSilenceAlertMinutesChange = viewModel::setSilenceAlertMinutes,
+                                trailMinutes = state.trailMinutes,
+                                onTrailMinutesChange = viewModel::setTrailMinutes,
+                                onResetTrails = viewModel::resetAllTrails,
+                                showOwnRadioOnMap = state.showOwnRadioOnMap,
+                                onShowOwnRadioChange = viewModel::setShowOwnRadioOnMap,
+                                pins = state.pins,
+                                onShowPin = viewModel::showPin,
+                                onRemovePin = viewModel::removePin,
+                                onClearPins = viewModel::clearPins,
+                                savedDataBytes = state.savedDataBytes,
+                                onClearSavedData = viewModel::clearSavedData,
+                                checkForUpdates = state.checkForUpdates,
+                                onCheckForUpdatesChange = viewModel::setCheckForUpdates,
                                 osmAnd = state.osmAnd,
                                 onDisconnect = viewModel::disconnect,
                                 onOsmAndEnabledChange = viewModel::setOsmAndEnabled,
@@ -76,5 +101,14 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.refreshEnvironment()
+        applicationContext.graph.updates.checkIfDue()
+    }
+
+    private fun openUrl(url: String) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(this, url, Toast.LENGTH_LONG).show()
+        }
     }
 }

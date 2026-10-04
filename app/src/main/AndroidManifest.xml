@@ -29,6 +29,9 @@
     <!-- Android 13+: needed to show the connection notification (the service runs without it). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Only for the optional "new version available" check against GitHub Releases. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <uses-feature
         android:name="android.hardware.bluetooth_le"
         android:required="true" />
@@ -76,6 +79,27 @@
                     android:scheme="meshand" />
             </intent-filter>
         </activity>
+
+        <!-- Share target: OsmAnd → tap a place → Share → "MeshAnd pin". -->
+        <activity
+            android:name=".ui.pin.SharePinActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/share_pin_label"
+            android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <!-- Pin images for OsmAnd's map (generated, read-only). -->
+        <provider
+            android:name=".data.osmand.PinIconProvider"
+            android:authorities="${applicationId}.pinicons"
+            android:exported="true"
+            tools:ignore="ExportedContentProvider" />
 
         <service
             android:name=".service.MeshConnectionService"

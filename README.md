@@ -39,12 +39,32 @@ they are and when you last heard from them. You can also ask OsmAnd to navigate 
 - **Adds a team list inside OsmAnd.** A "Meshtastic team" widget on the map and an item in
   OsmAnd's menu list everyone nearest first, with distance and direction ("1.2 km NE"). From
   there, one tap shows them on the map or starts navigation to them.
+- **Shows where people have been.** Tap a teammate on the map and choose **Trail** to draw their
+  path over the last hour (or 30 minutes to 6 hours) as a line in their colour. It keeps growing
+  while it's shown. The track is named after them ("MeshAnd trail - Giorgi"), and a marker shows
+  where and when it started. You can reset a trail to start it again from now.
+- **Shows how old each position is.** Tapping a teammate on the map, or opening the team list,
+  shows when their position was taken, and warns "GPS not updating" when their radio keeps
+  re-sending an old one (for example after losing its GPS fix indoors).
+- **Tells you if your own GPS is working.** MeshAnd shows when your radio last got a new GPS
+  position and how many satellites it sees, and warns you when it gets old. Your own radio is
+  hidden on the OsmAnd map unless you switch it on.
+- **Remembers trails and pins** on the phone, so they survive restarts. One button clears them.
 - **Keeps working in your pocket.** It stays connected with the screen off, reconnects by itself
   when the link drops, and remembers your radio.
 - **Warns you when someone goes quiet.** You choose which teammates to watch, and MeshAnd sends a
   notification if one hasn't been heard for 15 minutes to 2 hours.
 - **Only shows people heard in the last 24 hours**, so old nodes don't clutter the map.
-- **Only listens.** MeshAnd never sends anything to the mesh.
+- **Shares pins.** To show your team a place, tap it in OsmAnd and choose **Share → MeshAnd
+  pin**. MeshAnd sends just the coordinates as a short text message, plus a description if you
+  tick "Send a description": `meshand: 41.75002,44.77124 Camp`. Shared pins are listed in the
+  team list in OsmAnd. Teammates with MeshAnd get a notification and a map pin
+  in the sender's colour on their OsmAnd map, with Navigate; everyone else reads it in the Meshtastic app.
+- **Otherwise only listens.** Apart from pins you choose to send, MeshAnd never transmits
+  anything to the mesh and never changes your radio's settings.
+- **Tells you about new versions.** When you open MeshAnd, it asks GitHub whether a newer
+  release exists and offers the download. This is the only time MeshAnd uses the internet, and
+  you can switch it off at the bottom of the main screen.
 
 ## Android only
 

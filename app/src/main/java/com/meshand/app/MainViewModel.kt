@@ -7,6 +7,7 @@ import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.domain.model.DiscoveredRadio
 import com.meshand.app.domain.model.MeshNode
 import com.meshand.app.domain.model.OsmAndStatus
+import com.meshand.app.domain.model.Pin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -37,7 +38,19 @@ data class UiState(
     val hiddenNodeCount: Int = 0,
     /** "Teammate not heard" alert threshold; 0 = off. */
     val silenceAlertMinutes: Int = 0,
+    /** How much history each trail keeps. */
+    val trailMinutes: Int = 60,
+    /** Whether our own radio is drawn on the OsmAnd map. */
+    val showOwnRadioOnMap: Boolean = false,
+    /** Ask GitHub for new MeshAnd versions when the app opens. */
+    val checkForUpdates: Boolean = true,
+    /** Pins shared over the mesh, newest first. */
+    val pins: List<Pin> = emptyList(),
+    /** Size of the saved trails and pins on this phone. */
+    val savedDataBytes: Long = 0,
 )
+
+private data class Extras(val all: List<MeshNode>, val checkForUpdates: Boolean, val pins: List<Pin>, val savedBytes: Long)
 
 /**
  * Screen state only. The radio connection, node list and OsmAnd bridge live in [AppGraph]
@@ -58,12 +71,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         },
         osmAnd.status,
         client.activeRadio,
-        repository.nodes,
-        graph.settings.silenceAlertMinutes,
-    ) { state, osmAndStatus, activeRadio, allNodes, silenceMinutes ->
+        // All known nodes (for the hidden count), the update-check switch and pins.
+        combine(repository.nodes, graph.settings.checkForUpdates, graph.pins.pins, graph.store.sizeBytes, ::Extras),
+        combine(graph.settings.silenceAlertMinutes, graph.settings.trailMinutes, graph.settings.showOwnRadioOnMap, ::Triple),
+    ) { state, osmAndStatus, activeRadio, (all, checkForUpdates, pins, savedBytes), (silenceMinutes, trailMinutes, showOwnRadio) ->
+        val allCount = all.size
         state.copy(
+            checkForUpdates = checkForUpdates,
+            pins = pins,
+            savedDataBytes = savedBytes,
+            trailMinutes = trailMinutes,
+            showOwnRadioOnMap = showOwnRadio,
             osmAnd = osmAndStatus,
-            hiddenNodeCount = allNodes.size - state.nodes.size,
+            hiddenNodeCount = allCount - state.nodes.size,
             silenceAlertMinutes = silenceMinutes,
             // Offer a one-tap reconnect to the last radio when idle.
             savedRadio = if (activeRadio == null) client.savedRadio else null,
@@ -117,4 +137,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun showOnOsmAnd(node: MeshNode) = osmAnd.showOnMap(node)
 
     fun setSilenceAlertMinutes(minutes: Int) = graph.settings.setSilenceAlertMinutes(minutes)
+
+    fun setTrailMinutes(minutes: Int) = graph.settings.setTrailMinutes(minutes)
+
+    fun resetAllTrails() = graph.trails.reset(null)
+
+    fun setShowOwnRadioOnMap(show: Boolean) = graph.settings.setShowOwnRadioOnMap(show)
+
+    fun showPin(pin: Pin) = osmAnd.showPin(pin)
+
+    fun removePin(pin: Pin) = graph.pins.remove(pin.id)
+
+    fun clearPins() = graph.pins.clear()
+
+    /** Deletes saved trails and pins; trails restart from everyone's current position. */
+    fun clearSavedData() {
+        graph.trails.clearSaved()
+        graph.pins.clear()
+    }
+
+    fun setCheckForUpdates(enabled: Boolean) = graph.settings.setCheckForUpdates(enabled)
 }

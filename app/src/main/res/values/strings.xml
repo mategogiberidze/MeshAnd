@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MeshAnd</string>
+    <string name="share_pin_label">MeshAnd pin</string>
 </resources>

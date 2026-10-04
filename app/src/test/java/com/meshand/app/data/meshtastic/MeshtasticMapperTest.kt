@@ -157,4 +157,57 @@ class MeshtasticMapperTest {
         assertEquals(2, node.hopsAway)
         assertFalse(node.hasPosition)
     }
+
+    private fun positionPacket(latI: Int, time: Int = 0, timestamp: Int = 0, precisionBits: Int = 32): MeshPacket {
+        val payload = Position.ADAPTER.encode(
+            Position(latitude_i = latI, longitude_i = 447_000_000, time = time, timestamp = timestamp, precision_bits = precisionBits),
+        )
+        return MeshPacket(from = 7, decoded = Data(portnum = PortNum.POSITION_APP, payload = payload.toByteString()))
+    }
+
+    @Test
+    fun `fix time comes from timestamp, not from the send time`() {
+        val now = Instant.ofEpochSecond(1_800_000_000)
+        val sentOnly = MeshtasticMapper.toLiveUpdate(positionPacket(417_000_000, time = 1_800_000_000), now)!!
+        assertNull(sentOnly.fixTime)
+        assertEquals(now, sentOnly.positionHeardAt)
+        val withFix = MeshtasticMapper.toLiveUpdate(positionPacket(417_000_000, timestamp = 1_799_999_900), now)!!
+        assertEquals(Instant.ofEpochSecond(1_799_999_900), withFix.fixTime)
+    }
+
+    @Test
+    fun `position change is tracked across repeated reports`() {
+        fun at(s: Long) = Instant.ofEpochSecond(1_800_000_000 + s)
+        val first = MeshtasticMapper.toLiveUpdate(positionPacket(417_000_000), at(0))!!
+        val same = first.mergedWith(MeshtasticMapper.toLiveUpdate(positionPacket(417_000_000), at(600))!!)
+        // Base without a position: the first live position counts as new.
+        val fresh = MeshtasticMapper.merge(7, null, same, null)
+        assertEquals(at(0), fresh.positionChangedAt)
+        assertEquals(at(600), fresh.positionReportedAt)
+
+        val moved = same.mergedWith(MeshtasticMapper.toLiveUpdate(positionPacket(417_000_010), at(1200))!!)
+        assertEquals(at(1200), MeshtasticMapper.merge(7, null, moved, null).positionChangedAt)
+        // A packet without position keeps everything.
+        val ping = moved.mergedWith(LiveUpdate(7, at(1300), snr = null, hopsAway = null))
+        assertEquals(at(1200), MeshtasticMapper.merge(7, null, ping, null).positionChangedAt)
+    }
+
+    @Test
+    fun `first live position equal to NodeDB keeps the NodeDB time as upper bound`() {
+        val base = MeshtasticMapper.toMeshNode(
+            NodeInfo(num = 7, position = Position(latitude_i = 417_000_000, longitude_i = 447_000_000, time = 1_799_990_000)),
+            ownNodeNum = null,
+        )
+        val now = Instant.ofEpochSecond(1_800_000_000)
+        val same = MeshtasticMapper.toLiveUpdate(positionPacket(417_000_000), now)!!
+        assertEquals(Instant.ofEpochSecond(1_799_990_000), MeshtasticMapper.merge(7, base, same, null).positionChangedAt)
+        val different = MeshtasticMapper.toLiveUpdate(positionPacket(417_000_500), now)!!
+        assertEquals(now, MeshtasticMapper.merge(7, base, different, null).positionChangedAt)
+    }
+
+    @Test
+    fun `imprecise channel positions don't track changes`() {
+        val update = MeshtasticMapper.toLiveUpdate(positionPacket(417_000_000, precisionBits = 13), Instant.ofEpochSecond(1_800_000_000))!!
+        assertNull(MeshtasticMapper.merge(7, null, update, null).positionChangedAt)
+    }
 }

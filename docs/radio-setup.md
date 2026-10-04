@@ -59,9 +59,15 @@ Good to know:
 | Broadcast interval | 60 min | 5–10 min (a heartbeat while standing still) |
 | Smart minimum distance | 100 m | 25–30 m (below ~10 m, GPS jitter sends extra updates) |
 | Smart minimum interval | 5 min | 60 s |
+| Position flags: Timestamp | off | **on** (lets MeshAnd show exactly when the GPS got each position) |
 
 With these settings, a walking teammate updates about every minute, and someone standing still
 at least every 5–10 minutes. Then MeshAnd's "not heard" alerts can be set to 15–30 minutes.
+
+**Why the Timestamp flag:** when a radio loses its GPS fix, it keeps broadcasting its *last*
+position. Without the timestamp, MeshAnd can only notice this because the coordinates stop
+changing. With it, MeshAnd shows the real GPS fix time on the map and in the team list. It costs
+4 bytes per position.
 
 **Role:** keep people on **Client**. *Tracker* sleeps between broadcasts and can't receive or
 relay, so it only suits things you just want to locate (a car, a dog), not people who need to

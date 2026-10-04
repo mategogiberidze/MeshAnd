@@ -18,6 +18,16 @@ goal is to show Meshtastic node locations in OsmAnd.
   - Last-known positions kept across reconnects.
   - Remembers the radio and auto-connects on start.
   - OsmAnd "Meshtastic team" map widget and side-menu item, opening `TeamActivity`: members sorted by distance, with Show on map / Navigate.
+- **Phase 5 (trails): the first version is tested on the phone. The follow-ups below are built but not yet tested:**
+  - medium width
+  - trail files named after the person, with a start waypoint and description
+  - trail reset
+  - own radio hidden on the map by default
+  - "Your radio's GPS" card (`GpsHealth`), and position age on map points / team list / node cards (`PositionAge`)
+  - update check (`data/update/UpdateChecker`): on app open, at most hourly, GET GitHub `releases/latest`, banner if newer (`AppVersion`), switchable; INTERNET permission is used only for this
+  - `TrailBook`/`TrailRecorder` keep each node's positions for the configured window (30 min to 6 h, default 1 h), saved to disk (`data/storage/LocalStore`, tab-separated files via `StoreCodec`, every 10 s) with pins; "Clear saved data" deletes both.
+  - `OsmAndBridge` draws a shown trail as a GPX track named `MeshAnd trail - <name>.gpx` (OsmAnd titles tracks by file name), with `osmand:width` medium, and re-imports it as it grows.
+  - Trails are toggled from the team list, or from "Trail"/"Navigate" buttons added to OsmAnd's point menu (`addContextMenuButtons`).
 
 The user runs the app from Android Studio (Play button); don't install/launch it via adb unless asked.
 
@@ -26,7 +36,11 @@ Out of scope until asked:
 - MQTT, backend, database, auth
 - messaging, waypoints, telemetry history
 - auto-start at boot, fancy UI
-- sending our own position or other data to the mesh (the app is read-only toward the radio)
+- sending our own position or other data to the mesh. The app is read-only toward the radio, with one exception the user asked for on 2026-10-04: **pins**, sent only when the user taps Send
+  - pins: `ui/pin/SharePinActivity` is a share target (`ACTION_SEND text/plain`, label "MeshAnd pin") that parses coordinates out of OsmAnd's share text (`PinText.parseShared`: title line, `geo:`, `pin=`, …); only messages starting with `meshand:` are pins (the older `MeshAnd pin …` form was dropped on the user's request); the description is sent only when "Send a description" is ticked (off by default, pre-filled with OsmAnd's place name); pins are also listed in `TeamActivity`
+  - it sends only `meshand: <lat>,<lon> [description]` (5 decimals, description optional, ≤ 48 UTF-8 bytes: Georgian letters are 3 bytes) with `RadioClient.sendText` on channel 0
+  - `PinRepository` parses received text messages, keeps pins for 24 h (saved to disk), notifies, and tracks delivery via `MessageHandle.state`
+  - `OsmAndBridge` draws pins on a second layer (`meshand_pins`) with Navigate/Remove point-menu buttons. The layer uses OsmAnd image points (`isImagePoints`): OsmAnd draws its pin-shaped marker around an image loaded from `POINT_IMAGE_URI_PARAM` via `ContentResolver`, served by `PinIconProvider` (`content://<pkg>.pinicons/<rrggbb>.png`, generated, read-only, exported). The zoom bands are circle 1–6, small 7–11, big 12+. OsmAnd's `updateMapLayer` does **not** copy `imagePoints` (only points and zoom bounds), so the pins layer is removed and re-added once per OsmAnd connection
   - **Phone-GPS sharing for GPS-less radios: the user explicitly said "do not do this yet".**
 
 Keep the architecture simple: no DI framework, no extra Clean Architecture layers.
@@ -97,6 +111,10 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - **Batch updates don't delete.** `updateMapLayer` only adds or replaces points; call `removeMapPoint` for nodes that are gone.
 - **Android 7:** OsmAnd 5.4.x still has minSdk 24, but a future release may drop Android 7.
 - **Widgets:** `AMapWidget` icons are OsmAnd's own drawable names, and the click `Intent` is started from OsmAnd's app context, so it needs `FLAG_ACTIVITY_NEW_TASK`. The user may need to enable the widget in OsmAnd → Configure screen.
+- **GPX tracks** (`importGpx` with raw data): files go to OsmAnd's tracks folder (no subfolders: OsmAnd opens the file before creating parent dirs).
+  - On a file's **first** import, OsmAnd 5.4 skips the colour and the `API_IMPORTED` mark, so `removeGpx` would refuse it. MeshAnd re-imports ≥3 s later and also writes the colour as an `osmand:color` GPX extension.
+  - To hide reliably: import with `show=false`, then `removeGpx`.
+- **Point-menu buttons:** `addContextMenuButtons` with our `layerId` shows them on our points. The click arrives on the callback stub's `onContextMenuButtonClicked(buttonId, pointId, layerId)` on a binder thread. OsmAnd forgets the buttons when it restarts.
 - **Side-menu items:** `NavDrawerItem` uri is launched with `ACTION_VIEW`. `navigate` with a (0,0) start uses OsmAnd's current location.
 
 ## Meshtastic firmware position facts (firmware master source, 2026-10)
@@ -104,6 +122,11 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - **Default public channel:** on the default channel, `NodeDB.cpp` forces at least 60 min / 5 min. A private primary channel lifts this.
 - **TRACKER role:** sleeps between broadcasts, and doesn't receive or relay.
 - **Docs are behind:** meshtastic.org still lists 15 min / 30 s. Trust the firmware source.
+
+## Position timing (firmware `PositionModule.cpp`, checked 2026-10-04)
+- `Position.time` is when the packet was **sent** (radio clock), not the fix time. `Position.timestamp` is the GPS fix time, sent only with the `TIMESTAMP` position flag (off by default).
+- A radio that loses its fix keeps broadcasting its last position with a fresh `time`.
+- So without `timestamp`, MeshAnd infers fix freshness from coordinate changes (`MeshNode.positionChangedAt`): a GPS with a fix jitters by metres, so repeated identical coordinates mean a stale position. Skipped when the channel truncates positions (`precision_bits` 1–31).
 
 ## Rules
 - Never log channel PSKs, keys, `configBundle`, or `channels`. Keep SDK protocol-payload logging off.

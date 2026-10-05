@@ -15,6 +15,7 @@
 **[Download the APK](https://github.com/mategogiberidze/MeshAnd/releases/latest)** ·
 [Set up your radios](docs/radio-setup.md) ·
 [What's new](CHANGELOG.md) ·
+[Ask a question](https://github.com/mategogiberidze/MeshAnd/discussions) ·
 [Report a bug](https://github.com/mategogiberidze/MeshAnd/issues/new/choose)
 
 </div>
@@ -211,10 +212,13 @@ connected, with a button to disconnect.
   and OsmAnd Pro.
   Reports from other phones and radios are very welcome.
 
-## Contributing
+## Community and contributing
 
-Bug reports, test results from other phones and radios, and pull requests are all welcome. See
-[CONTRIBUTING.md](CONTRIBUTING.md).
+- **Questions, ideas and field reports:** join the
+  [Discussions](https://github.com/mategogiberidze/MeshAnd/discussions). Ask for help in
+  **Q&A**, suggest features in **Ideas**, and tell us how a trip went in **Show and tell**.
+- **Bugs:** open an [issue](https://github.com/mategogiberidze/MeshAnd/issues/new/choose).
+- **Code and docs:** pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 - **Developer docs:** building, project structure, logs and the release process are in
   [docs/development.md](docs/development.md).

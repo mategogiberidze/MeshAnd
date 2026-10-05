@@ -1,0 +1,36 @@
+title: "[Question] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for asking! The details below help others answer quickly.
+        Radio settings questions? [docs/radio-setup.md](https://github.com/mategogiberidze/MeshAnd/blob/main/docs/radio-setup.md) may already have the answer.
+        **Please don't post real locations, channel keys or private names.**
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What are you trying to do, and what happens?
+    validations:
+      required: true
+  - type: input
+    id: meshand
+    attributes:
+      label: MeshAnd version
+      description: Shown in MeshAnd → Settings → About
+      placeholder: e.g. 0.2.0
+  - type: input
+    id: phone
+    attributes:
+      label: Phone and Android version
+      placeholder: e.g. Pixel 8, Android 15
+  - type: input
+    id: radio
+    attributes:
+      label: Radio, firmware and role
+      placeholder: e.g. LILYGO T-Beam Supreme, 2.7.26, Client
+  - type: input
+    id: osmand
+    attributes:
+      label: OsmAnd version and edition
+      placeholder: e.g. OsmAnd 5.4.8 (free, Google Play)

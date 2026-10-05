@@ -1,5 +1,11 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Questions and help
+    url: https://github.com/mategogiberidze/MeshAnd/discussions/categories/q-a
+    about: Not sure it's a bug? Ask in Discussions. Setup and "how do I…" questions are welcome there.
+  - name: Ideas for new features
+    url: https://github.com/mategogiberidze/MeshAnd/discussions/categories/ideas
+    about: Suggest and discuss ideas before they become issues.
   - name: Meshtastic radio questions
     url: https://meshtastic.org/docs/
     about: Questions about radio settings, firmware or Meshtastic itself are best answered by the Meshtastic docs and community.

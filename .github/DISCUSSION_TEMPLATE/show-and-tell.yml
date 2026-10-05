@@ -1,0 +1,31 @@
+title: "[Field report] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Used MeshAnd outdoors? We'd love to hear how it went, good or bad.
+        **Before adding screenshots, hide real names and locations you don't want public.**
+  - type: textarea
+    id: story
+    attributes:
+      label: Where and how did you use it?
+      description: Activity, terrain, team size, how far apart people were.
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: Radios and phones
+      placeholder: e.g. 4 × T-Beam Supreme, LongFast, Pixel 7 + Ulefone tablet
+  - type: textarea
+    id: settings
+    attributes:
+      label: Radio settings that worked (or didn't)
+      description: Position interval, smart broadcast, preset, role…
+  - type: textarea
+    id: result
+    attributes:
+      label: How did it go?
+      description: What worked well, what was annoying, what you'd change. Screenshots welcome.
+    validations:
+      required: true

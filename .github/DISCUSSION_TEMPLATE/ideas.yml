@@ -1,0 +1,26 @@
+title: "[Idea] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Got an idea for MeshAnd? Describe the problem first: a good idea often has more than one possible solution.
+        Keep in mind MeshAnd is Android-only and deliberately simple.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would it solve?
+      description: When does it happen, e.g. on a hike, a ride, a search?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How would it work for you, on the phone or in OsmAnd?
+    validations:
+      required: true
+  - type: textarea
+    id: other
+    attributes:
+      label: Anything else?
+      description: Other apps that do it well, screenshots, sketches.

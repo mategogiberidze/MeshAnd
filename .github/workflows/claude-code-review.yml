@@ -10,13 +10,17 @@ on:
     #   - "src/**/*.js"
     #   - "src/**/*.jsx"
 
+# A new push to the same PR cancels a review that is still running.
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # Skip drafts (reviewed once marked "Ready for review") and PRs from forks: GitHub doesn't
+    # give fork PRs the Claude secret, so the review would fail with a red X. A maintainer can
+    # still review any PR by commenting "@claude review" (see claude.yml).
+    if: ${{ !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository }}
 
     runs-on: ubuntu-latest
     permissions:

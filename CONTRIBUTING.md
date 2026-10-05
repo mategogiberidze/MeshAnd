@@ -26,6 +26,7 @@ Thanks for helping! MeshAnd is a small hobby project, so contributions of any si
   discussion first.
 - **Keep it simple.** No dependency-injection framework, no database, no extra architecture
   layers. Match the style of the code around your change.
+- **Changes go through pull requests.** `main` is protected: the CI check (tests, lint, build) must pass before a pull request can be merged.
 - **Fill in the pull request template.** It asks how you tested and what you changed.
 - **Test before you push.** Tests must pass (`./gradlew :app:testDebugUnitTest`). Bluetooth
   changes must be tried on a real phone with a real radio, because the emulator has no Bluetooth.

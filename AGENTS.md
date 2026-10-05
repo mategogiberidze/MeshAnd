@@ -65,6 +65,11 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - **App version:** `versionCode` / `versionName` in `app/build.gradle.kts` (currently 5 / 0.2.0; versionName was reset to 0.1.0 for the first public release, and versionCode keeps rising). Bump both for every APK handed out.
 - **Release:** `./gradlew :app:assembleRelease` signs with `signing/meshand-release.jks`, using the passwords in `keystore.properties`. Both are gitignored: **never commit them, never print the passwords.** If the properties file is missing, the release build is unsigned.
 - **Remote:** `origin` is `git@github.com:mategogiberidze/MeshAnd.git` (branch `main`).
+- **Repository rules (GitHub rulesets, 2026-10-05):**
+  - `main`: no deletion or force-push, changes through a PR, and the `build` CI check must pass.
+  - `v*` tags: only admins may create, move or delete them.
+  - The repo admin (the owner's account, which this agent pushes with) bypasses both, so direct pushes to `main` and release tags still work. GitHub notes the bypass.
+  - Never force-push `main`.
 - **CI:** `.github/workflows/ci.yml` runs tests, lint and a debug build on pushes to `main` and on PRs.
 - **Release notes:** `CHANGELOG.md`, one `## <version>` section per release, written for app users. The release workflow publishes that section (plus a download line and a compare link) as the GitHub Release text, and fails if it's missing. **Add the section before tagging.**
 - **Releases:** `.github/workflows/release.yml` runs on a `v*` tag. It requires the tag to equal `versionName`, signs using the secrets `MESHAND_KEYSTORE_BASE64` and `MESHAND_KEYSTORE_PASSWORD`, and publishes `MeshAnd-<version>.apk` to GitHub Releases.

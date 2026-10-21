@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.meshand.app.MainActivity
 import com.meshand.app.R
 import com.meshand.app.domain.PositionAge
+import com.meshand.app.domain.model.ChatThread
 import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.domain.model.MeshNode
 import com.meshand.app.domain.model.OsmAndStatus
@@ -164,6 +165,14 @@ class TeamActivity : ComponentActivity() {
                                     }
                                 },
                                 onResetTrail = { graph.trails.reset(it.node.id) },
+                                onMessage = { member ->
+                                    startActivity(
+                                        Intent(this@TeamActivity, MainActivity::class.java)
+                                            .putExtra(MainActivity.EXTRA_OPEN_CHAT, ChatThread.Direct(member.node.id).key)
+                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                                    )
+                                    finish()
+                                },
                                 onOpenMeshAnd = openMeshAnd,
                             )
                             TeamPage.Pins -> PinsPage(
@@ -219,6 +228,7 @@ private fun TeamList(
     trailShown: (TeamMember) -> Boolean,
     onTrail: (TeamMember) -> Unit,
     onResetTrail: (TeamMember) -> Unit,
+    onMessage: (TeamMember) -> Unit,
     onOpenMeshAnd: () -> Unit,
 ) {
     LazyColumn(
@@ -264,6 +274,7 @@ private fun TeamList(
                 trailShown = trailShown(member),
                 onTrail = { onTrail(member) },
                 onResetTrail = { onResetTrail(member) },
+                onMessage = { onMessage(member) },
             )
         }
     }
@@ -283,6 +294,7 @@ private fun MemberCard(
     trailShown: Boolean,
     onTrail: () -> Unit,
     onResetTrail: () -> Unit,
+    onMessage: () -> Unit,
 ) {
     val node = member.node
     SectionCard {
@@ -306,6 +318,13 @@ private fun MemberCard(
                 )
             }
             member.distanceMeters?.let { DistanceBadge(it) }
+            IconButton(onClick = onMessage) {
+                Icon(
+                    painterResource(R.drawable.ic_chat),
+                    contentDescription = "Message ${node.longName ?: node.shortName ?: node.nodeIdHex}",
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
         val canGo = osmAndReady && node.hasPosition
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

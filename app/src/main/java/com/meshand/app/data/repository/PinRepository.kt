@@ -44,8 +44,8 @@ private const val TAG = "MeshAnd/Pins"
 
 /**
  * Pins shared over the mesh as `meshand: lat,lon` text messages ([PinText]): received from teammates,
- * or sent from this phone (from OsmAnd's Share menu, see `SharePinActivity`). Sending a pin is
- * the only thing MeshAnd ever transmits, and only when the user taps Send. Saved to [store] so
+ * or sent from this phone (from OsmAnd's Share menu, see `SharePinActivity`), only when the user
+ * taps Send. Other text messages are chat ([ChatRepository]). Saved to [store] so
  * they survive restarts; pins older than [KEEP_FOR] are dropped.
  */
 class PinRepository(

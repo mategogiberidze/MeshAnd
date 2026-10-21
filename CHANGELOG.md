@@ -13,6 +13,12 @@ using the app, not for developers.
   switch it on in **Settings → Phone GPS**. Your radio shares the position with the team on its
   usual schedule, so it uses no extra airtime. It's off until you switch it on, and MeshAnd asks
   for location permission at that point.
+- **Chat.** Read and send text messages from MeshAnd: on the **Chat** tab, every channel on your
+  radio has its own conversation, and direct messages to one person get theirs. Tap **Message** on
+  someone in the Nodes page or the Team list to write to them directly. You see when your message
+  was delivered (direct) or relayed by a neighbour (channel), and get a notification for new
+  messages. Messages are saved on the phone. A message can be up to 233 bytes: about 230 Latin
+  letters, or about 77 Georgian letters.
 
 ## 0.2.0
 

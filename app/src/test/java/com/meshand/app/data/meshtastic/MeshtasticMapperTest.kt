@@ -16,19 +16,20 @@ import org.meshtastic.proto.Position
 import org.meshtastic.proto.User
 import java.time.Instant
 
+// Protobufs 2.8 are builder-only (no public constructors), hence Type.build { field(value) }.
 class MeshtasticMapperTest {
 
     @Test
     fun `maps full NodeInfo`() {
-        val info = NodeInfo(
-            num = 0x12345678,
-            user = User(id = "!12345678", long_name = "Giorgi", short_name = "GIO"),
-            position = Position(latitude_i = 417_151_234, longitude_i = 447_827_000, altitude = 850),
-            snr = 7.5f,
-            last_heard = 1_790_000_000,
-            device_metrics = DeviceMetrics(battery_level = 78),
-            hops_away = 1,
-        )
+        val info = NodeInfo.build {
+            num(0x12345678)
+            user(User.build { id("!12345678"); long_name("Giorgi"); short_name("GIO") })
+            position(Position.build { latitude_i(417_151_234); longitude_i(447_827_000); altitude(850) })
+            snr(7.5f)
+            last_heard(1_790_000_000)
+            device_metrics(DeviceMetrics.build { battery_level(78) })
+            hops_away(1)
+        }
         val node = MeshtasticMapper.toMeshNode(info, ownNodeNum = null)
         assertEquals(0x12345678L, node.id)
         assertEquals("!12345678", node.nodeIdHex)
@@ -45,7 +46,7 @@ class MeshtasticMapperTest {
 
     @Test
     fun `missing fields map to null`() {
-        val node = MeshtasticMapper.toMeshNode(NodeInfo(num = 42), ownNodeNum = null)
+        val node = MeshtasticMapper.toMeshNode(NodeInfo.build { num(42) }, ownNodeNum = null)
         assertNull(node.shortName)
         assertNull(node.longName)
         assertNull(node.latitude)
@@ -60,7 +61,7 @@ class MeshtasticMapperTest {
 
     @Test
     fun `node numbers above Int MAX are unsigned`() {
-        val node = MeshtasticMapper.toMeshNode(NodeInfo(num = 0xDEADBEEF.toInt()), ownNodeNum = null)
+        val node = MeshtasticMapper.toMeshNode(NodeInfo.build { num(0xDEADBEEF.toInt()) }, ownNodeNum = null)
         assertEquals(0xDEADBEEFL, node.id)
         assertEquals("!deadbeef", node.nodeIdHex)
     }
@@ -68,7 +69,7 @@ class MeshtasticMapperTest {
     @Test
     fun `battery above 100 means external power`() {
         val node = MeshtasticMapper.toMeshNode(
-            NodeInfo(num = 1, device_metrics = DeviceMetrics(battery_level = 101)),
+            NodeInfo.build { num(1); device_metrics(DeviceMetrics.build { battery_level(101) }) },
             ownNodeNum = null,
         )
         assertEquals(MeshNode.BATTERY_POWERED, node.batteryLevel)
@@ -77,7 +78,7 @@ class MeshtasticMapperTest {
     @Test
     fun `zero coordinates are treated as no fix`() {
         val node = MeshtasticMapper.toMeshNode(
-            NodeInfo(num = 1, position = Position(latitude_i = 0, longitude_i = 0)),
+            NodeInfo.build { num(1); position(Position.build { latitude_i(0); longitude_i(0) }) },
             ownNodeNum = null,
         )
         assertFalse(node.hasPosition)
@@ -85,21 +86,21 @@ class MeshtasticMapperTest {
 
     @Test
     fun `negative coordinates are preserved`() {
-        val pos = Position(latitude_i = -338_688_000, longitude_i = -700_000_000)
+        val pos = Position.build { latitude_i(-338_688_000); longitude_i(-700_000_000) }
         assertEquals(-33.8688, MeshtasticMapper.latitudeOf(pos)!!, 1e-9)
         assertEquals(-70.0, MeshtasticMapper.longitudeOf(pos)!!, 1e-9)
     }
 
     @Test
     fun `position packet becomes live update`() {
-        val payload = Position.ADAPTER.encode(Position(latitude_i = 417_000_000, longitude_i = 447_000_000, altitude = 500))
-        val packet = MeshPacket(
-            from = 0x0A0B0C0D,
-            decoded = Data(portnum = PortNum.POSITION_APP, payload = payload.toByteString()),
-            rx_snr = 6.25f,
-            hop_start = 3,
-            hop_limit = 1,
-        )
+        val payload = Position.ADAPTER.encode(Position.build { latitude_i(417_000_000); longitude_i(447_000_000); altitude(500) })
+        val packet = MeshPacket.build {
+            from(0x0A0B0C0D)
+            decoded(Data.build { portnum(PortNum.POSITION_APP); payload(payload.toByteString()) })
+            rx_snr(6.25f)
+            hop_start(3)
+            hop_limit(1)
+        }
         val now = Instant.ofEpochSecond(1_800_000_000)
         val update = MeshtasticMapper.toLiveUpdate(packet, now)!!
         assertEquals(0x0A0B0C0DL, update.nodeId)
@@ -120,13 +121,13 @@ class MeshtasticMapperTest {
     @Test
     fun `live position overrides NodeDB position, non-position packet keeps it`() {
         val base = MeshtasticMapper.toMeshNode(
-            NodeInfo(
-                num = 7,
-                user = User(long_name = "Base"),
-                position = Position(latitude_i = 10_000_000, longitude_i = 20_000_000),
-                last_heard = 1_000,
-                device_metrics = DeviceMetrics(battery_level = 50),
-            ),
+            NodeInfo.build {
+                num(7)
+                user(User.build { long_name("Base") })
+                position(Position.build { latitude_i(10_000_000); longitude_i(20_000_000) })
+                last_heard(1_000)
+                device_metrics(DeviceMetrics.build { battery_level(50) })
+            },
             ownNodeNum = null,
         )
         val heard = Instant.ofEpochSecond(2_000)
@@ -160,9 +161,15 @@ class MeshtasticMapperTest {
 
     private fun positionPacket(latI: Int, time: Int = 0, timestamp: Int = 0, precisionBits: Int = 32): MeshPacket {
         val payload = Position.ADAPTER.encode(
-            Position(latitude_i = latI, longitude_i = 447_000_000, time = time, timestamp = timestamp, precision_bits = precisionBits),
+            Position.build {
+                latitude_i(latI)
+                longitude_i(447_000_000)
+                time(time)
+                timestamp(timestamp)
+                precision_bits(precisionBits)
+            },
         )
-        return MeshPacket(from = 7, decoded = Data(portnum = PortNum.POSITION_APP, payload = payload.toByteString()))
+        return MeshPacket.build { from(7); decoded(Data.build { portnum(PortNum.POSITION_APP); payload(payload.toByteString()) }) }
     }
 
     @Test
@@ -195,7 +202,10 @@ class MeshtasticMapperTest {
     @Test
     fun `first live position equal to NodeDB keeps the NodeDB time as upper bound`() {
         val base = MeshtasticMapper.toMeshNode(
-            NodeInfo(num = 7, position = Position(latitude_i = 417_000_000, longitude_i = 447_000_000, time = 1_799_990_000)),
+            NodeInfo.build {
+                num(7)
+                position(Position.build { latitude_i(417_000_000); longitude_i(447_000_000); time(1_799_990_000) })
+            },
             ownNodeNum = null,
         )
         val now = Instant.ofEpochSecond(1_800_000_000)

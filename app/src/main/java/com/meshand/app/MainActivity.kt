@@ -1,7 +1,9 @@
 package com.meshand.app
 
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.widget.Toast
 import android.os.Bundle
@@ -33,9 +35,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.domain.model.OsmAndStatus
+import com.meshand.app.domain.model.PhoneGpsStatus
+import com.meshand.app.service.MeshConnectionService
 import com.meshand.app.ui.common.UpdateBanner
 import com.meshand.app.ui.connection.ConnectionScreen
 import com.meshand.app.ui.nodes.NodesPage
@@ -54,6 +59,33 @@ class MainActivity : ComponentActivity() {
             viewModel.refreshEnvironment()
             viewModel.autoConnect()
         }
+
+    private val locationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+            viewModel.refreshEnvironment()
+            if (result[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
+                viewModel.setUsePhoneGps(true)
+            } else {
+                Toast.makeText(
+                    this,
+                    "Phone GPS needs precise location. Allow it in Android Settings → Apps → MeshAnd → Permissions.",
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
+        }
+
+    /** Switching phone GPS on asks for the location permission first, if needed. */
+    private fun setUsePhoneGps(enabled: Boolean) {
+        val granted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        if (!enabled || granted) {
+            viewModel.setUsePhoneGps(enabled)
+        } else {
+            locationPermissionLauncher.launch(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+            )
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,6 +150,8 @@ class MainActivity : ComponentActivity() {
                                     nodes = state.nodes,
                                     osmAnd = state.osmAnd,
                                     pinCount = state.pins.size,
+                                    phoneGps = state.phoneGps,
+                                    onUsePhoneGpsChange = ::setUsePhoneGps,
                                     onDisconnect = viewModel::disconnect,
                                     onOsmAndEnabledChange = viewModel::setOsmAndEnabled,
                                     onOpenTeam = openTeam,
@@ -158,6 +192,8 @@ class MainActivity : ComponentActivity() {
                                 onThemeModeChange = viewModel::setThemeMode,
                                 showOwnRadioOnMap = state.showOwnRadioOnMap,
                                 onShowOwnRadioChange = viewModel::setShowOwnRadioOnMap,
+                                usePhoneGps = state.usePhoneGps,
+                                onUsePhoneGpsChange = ::setUsePhoneGps,
                                 silenceAlertMinutes = state.silenceAlertMinutes,
                                 onSilenceAlertMinutesChange = viewModel::setSilenceAlertMinutes,
                                 trailMinutes = state.trailMinutes,
@@ -179,6 +215,8 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         viewModel.refreshEnvironment()
         applicationContext.graph.updates.checkIfDue()
+        // Android refused location in the background; now that we're in front, the service can retry.
+        if (applicationContext.graph.phoneGps.status.value == PhoneGpsStatus.NeedsApp) MeshConnectionService.start(this)
     }
 
     private fun openUrl(url: String) {

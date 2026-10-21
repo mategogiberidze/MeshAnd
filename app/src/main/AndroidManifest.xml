@@ -12,9 +12,10 @@
     <uses-permission
         android:name="android.permission.BLUETOOTH_ADMIN"
         android:maxSdkVersion="30" />
-    <uses-permission
-        android:name="android.permission.ACCESS_FINE_LOCATION"
-        android:maxSdkVersion="30" />
+    <!-- Android 7–11: also needed for BLE scanning. All versions: the optional "use phone GPS
+         for my radio" override (asked for only when the user switches it on). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <!-- Android 12+ (API 31+): scan without deriving location, and connect. -->
     <uses-permission
@@ -26,6 +27,8 @@
     <!-- Foreground service keeping the radio link alive while OsmAnd is in front. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <!-- Only while "use phone GPS for my radio" is on: keeps location updates coming with the screen off. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <!-- Android 13+: needed to show the connection notification (the service runs without it). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
@@ -104,6 +107,6 @@
         <service
             android:name=".service.MeshConnectionService"
             android:exported="false"
-            android:foregroundServiceType="connectedDevice" />
+            android:foregroundServiceType="connectedDevice|location" />
     </application>
 </manifest>

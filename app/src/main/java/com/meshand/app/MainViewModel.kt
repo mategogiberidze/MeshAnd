@@ -8,6 +8,7 @@ import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.domain.model.DiscoveredRadio
 import com.meshand.app.domain.model.MeshNode
 import com.meshand.app.domain.model.OsmAndStatus
+import com.meshand.app.domain.model.PhoneGpsStatus
 import com.meshand.app.domain.model.Pin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -43,6 +44,9 @@ data class UiState(
     val trailMinutes: Int = 60,
     /** Whether our own radio is drawn on the OsmAnd map. */
     val showOwnRadioOnMap: Boolean = false,
+    /** "Use phone GPS for my radio" switch, and what it is doing. */
+    val usePhoneGps: Boolean = false,
+    val phoneGps: PhoneGpsStatus = PhoneGpsStatus.Off,
     /** Ask GitHub for new MeshAnd versions when the app opens. */
     val checkForUpdates: Boolean = true,
     /** Pins shared over the mesh, newest first. */
@@ -58,6 +62,14 @@ private data class Extras(
     val pins: List<Pin>,
     val savedBytes: Long,
     val themeMode: ThemeMode,
+)
+
+private data class Prefs(
+    val silenceMinutes: Int,
+    val trailMinutes: Int,
+    val showOwnRadio: Boolean,
+    val usePhoneGps: Boolean,
+    val phoneGps: PhoneGpsStatus,
 )
 
 /**
@@ -81,8 +93,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         client.activeRadio,
         // All known nodes (for the hidden count), the update-check switch and pins.
         combine(repository.nodes, graph.settings.checkForUpdates, graph.pins.pins, graph.store.sizeBytes, graph.settings.themeMode, ::Extras),
-        combine(graph.settings.silenceAlertMinutes, graph.settings.trailMinutes, graph.settings.showOwnRadioOnMap, ::Triple),
-    ) { state, osmAndStatus, activeRadio, (all, checkForUpdates, pins, savedBytes, themeMode), (silenceMinutes, trailMinutes, showOwnRadio) ->
+        combine(
+            graph.settings.silenceAlertMinutes,
+            graph.settings.trailMinutes,
+            graph.settings.showOwnRadioOnMap,
+            graph.settings.usePhoneGps,
+            graph.phoneGps.status,
+            ::Prefs,
+        ),
+    ) { state, osmAndStatus, activeRadio, (all, checkForUpdates, pins, savedBytes, themeMode), (silenceMinutes, trailMinutes, showOwnRadio, usePhoneGps, phoneGps) ->
         val allCount = all.size
         state.copy(
             checkForUpdates = checkForUpdates,
@@ -91,6 +110,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             themeMode = themeMode,
             trailMinutes = trailMinutes,
             showOwnRadioOnMap = showOwnRadio,
+            usePhoneGps = usePhoneGps,
+            phoneGps = phoneGps,
             osmAnd = osmAndStatus,
             hiddenNodeCount = allCount - state.nodes.size,
             silenceAlertMinutes = silenceMinutes,
@@ -108,6 +129,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** Re-read permission / adapter state; called on resume and after the permission dialog. */
     fun refreshEnvironment() {
         val app = getApplication<Application>()
+        graph.phoneGps.refreshPermission()
         environment.value = EnvironmentState(
             permissions = BluetoothPermissions.status(app),
             optionalPermissions = BluetoothPermissions.optionalStatus(app),
@@ -152,6 +174,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun resetAllTrails() = graph.trails.reset(null)
 
     fun setShowOwnRadioOnMap(show: Boolean) = graph.settings.setShowOwnRadioOnMap(show)
+
+    /** Turning it on needs the location permission first; MainActivity asks for it. */
+    fun setUsePhoneGps(enabled: Boolean) = graph.settings.setUsePhoneGps(enabled)
 
     fun showPin(pin: Pin) = osmAnd.showPin(pin)
 

@@ -30,6 +30,8 @@ fun SettingsScreen(
     onThemeModeChange: (ThemeMode) -> Unit,
     showOwnRadioOnMap: Boolean,
     onShowOwnRadioChange: (Boolean) -> Unit,
+    usePhoneGps: Boolean,
+    onUsePhoneGpsChange: (Boolean) -> Unit,
     silenceAlertMinutes: Int,
     onSilenceAlertMinutesChange: (Int) -> Unit,
     trailMinutes: Int,
@@ -58,6 +60,17 @@ fun SettingsScreen(
                     subtitle = "Useful for debugging. Distances always use your radio's position.",
                     checked = showOwnRadioOnMap,
                     onCheckedChange = onShowOwnRadioChange,
+                )
+            }
+        }
+        item {
+            SectionCard(title = "Phone GPS") {
+                SwitchRow(
+                    title = "Use phone GPS for my radio",
+                    subtitle = "For when the radio's GPS is stuck. MeshAnd sends the phone's location to your radio, " +
+                        "and the radio shares it on its usual schedule. If the radio gets its own fix, both are used.",
+                    checked = usePhoneGps,
+                    onCheckedChange = onUsePhoneGpsChange,
                 )
             }
         }

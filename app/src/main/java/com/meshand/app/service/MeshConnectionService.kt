@@ -1,5 +1,6 @@
 package com.meshand.app.service
 
+import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
@@ -18,6 +19,7 @@ import com.meshand.app.R
 import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.domain.model.MeshNode
 import com.meshand.app.domain.model.OsmAndStatus
+import com.meshand.app.domain.model.PhoneGpsStatus
 import com.meshand.app.graph
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,17 +40,19 @@ private const val TAG = "MeshAnd"
  */
 class MeshConnectionService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var notification: Notification? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         createChannel()
+        val first = buildNotification("Starting…", null).also { notification = it }
         try {
             ServiceCompat.startForeground(
                 this,
                 NOTIFICATION_ID,
-                buildNotification("Starting…", null),
+                first,
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
                 } else {
@@ -59,6 +63,7 @@ class MeshConnectionService : Service() {
         } catch (e: Exception) {
             // Android 12+ refuses foreground starts from the background (e.g. a sticky restart).
             Log.e(TAG, "Could not start foreground service", e)
+            notification = null
             stopSelf()
             return
         }
@@ -67,20 +72,24 @@ class MeshConnectionService : Service() {
         // After the system restarted us (process was killed), reconnect if the user wanted it;
         // otherwise nothing is wanted and the collector below stops the service.
         graph.client.connectSavedIfWanted()
+        // Run as a location service too while the phone feeds its GPS to the radio.
+        scope.launch { graph.phoneGps.wantsLocation.collect(::applyForegroundType) }
         scope.launch {
-            combine(graph.client.activeRadio, graph.client.status, graph.repository.activeNodes, graph.osmAnd.status) { radio, status, nodes, osmAnd ->
-                if (radio == null) null else Triple(status, nodes, osmAnd)
+            combine(graph.client.activeRadio, graph.client.status, graph.repository.activeNodes, graph.osmAnd.status, graph.phoneGps.status) { radio, status, nodes, osmAnd, phoneGps ->
+                if (radio == null) null else NotificationState(status, nodes, osmAnd, phoneGps)
             }.conflate().collect { state ->
                 if (state == null) {
                     Log.i(TAG, "No radio wanted any more; stopping foreground service")
                     stopSelf()
                     return@collect
                 }
-                val (status, nodes, osmAnd) = state
+                val (status, nodes, osmAnd, phoneGps) = state
+                val text = statusText(status, nodes) + phoneGpsText(phoneGps).orEmpty()
+                val built = buildNotification(text, osmAndText(osmAnd)).also { notification = it }
                 NotificationManagerCompat.from(this@MeshConnectionService).let { manager ->
                     if (manager.areNotificationsEnabled()) {
                         try {
-                            manager.notify(NOTIFICATION_ID, buildNotification(statusText(status, nodes), osmAndText(osmAnd)))
+                            manager.notify(NOTIFICATION_ID, built)
                         } catch (e: SecurityException) {
                             Log.w(TAG, "Notification permission missing", e)
                         }
@@ -92,8 +101,33 @@ class MeshConnectionService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_DISCONNECT) applicationContext.graph.client.disconnect()
+        val graph = applicationContext.graph
+        if (intent?.action == ACTION_DISCONNECT) {
+            graph.client.disconnect()
+        } else if (notification != null) {
+            // Started again from the app (in front now): retry location access if it was refused.
+            applyForegroundType(graph.phoneGps.wantsLocation.value)
+        }
         return START_STICKY
+    }
+
+    /**
+     * Adds or drops the location service type. Android 14+ refuses to add it while MeshAnd is in
+     * the background (e.g. after a sticky restart); phone GPS then waits until the app is opened.
+     */
+    private fun applyForegroundType(withLocation: Boolean) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return // no types; the service is enough
+        val current = notification ?: return
+        val phoneGps = applicationContext.graph.phoneGps
+        val type = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE or
+            (if (withLocation) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
+        try {
+            ServiceCompat.startForeground(this, NOTIFICATION_ID, current, type)
+            phoneGps.setBackgroundBlocked(false)
+        } catch (e: Exception) {
+            Log.w(TAG, "Android refused location access in the background; phone GPS waits for the app", e)
+            phoneGps.setBackgroundBlocked(true)
+        }
     }
 
     override fun onDestroy() {
@@ -151,6 +185,21 @@ class MeshConnectionService : Service() {
             ConnectionStatus.Disconnected -> "Disconnected"
         }
     }
+
+    private fun phoneGpsText(status: PhoneGpsStatus): String? = when (status) {
+        PhoneGpsStatus.Off, PhoneGpsStatus.WaitingForRadio -> null
+        is PhoneGpsStatus.Sending, PhoneGpsStatus.WaitingForFix -> " · phone GPS"
+        PhoneGpsStatus.NeedsApp -> " · phone GPS paused: open MeshAnd"
+        PhoneGpsStatus.LocationOff -> " · phone GPS: Location is off"
+        PhoneGpsStatus.NoPermission -> " · phone GPS: permission needed"
+    }
+
+    private data class NotificationState(
+        val status: ConnectionStatus,
+        val nodes: List<MeshNode>,
+        val osmAnd: OsmAndStatus,
+        val phoneGps: PhoneGpsStatus,
+    )
 
     private fun osmAndText(status: OsmAndStatus): String? = when (status) {
         is OsmAndStatus.Showing -> "OsmAnd: ${status.nodeCount} on map"

@@ -90,7 +90,7 @@ fun SettingsScreen(
         item {
             SectionCard(title = "Saved data") {
                 HintText(
-                    "Trails and pins are saved on this phone, so they're still there after MeshAnd or the " +
+                    "Trails, pins and messages are saved on this phone, so they're still there after MeshAnd or the " +
                         "phone restarts. Using ${formatBytes(savedDataBytes)}.",
                 )
                 OutlinedButton(onClick = { confirmClear = true }) { Text("Clear saved data") }
@@ -112,7 +112,7 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { confirmClear = false },
             title = { Text("Clear saved data?") },
-            text = { Text("All trails and pins are deleted from this phone. Trails start again from everyone's current position.") },
+            text = { Text("All trails, pins and messages are deleted from this phone. Trails start again from everyone's current position.") },
             confirmButton = {
                 TextButton(onClick = { confirmClear = false; onClearSavedData() }) { Text("Clear") }
             },

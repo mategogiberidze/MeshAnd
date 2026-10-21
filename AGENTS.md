@@ -38,9 +38,9 @@ The user runs the app from Android Studio (Play button); don't install/launch it
 Out of scope until asked:
 - iOS: MeshAnd is Android-only by design. OsmAnd's API for other apps exists only on Android.
 - MQTT, backend, database, auth
-- messaging, waypoints, telemetry history
+- waypoints, telemetry history
 - auto-start at boot, fancy UI
-- sending our own position or other data to the mesh. The app is read-only toward the radio, with two exceptions the user asked for: **pins** (2026-10-04, sent only when the user taps Send) and the **phone-GPS override** (2026-10-21, below)
+- sending our own position or other data to the mesh. The app is read-only toward the radio, with three exceptions the user asked for: **pins** (2026-10-04, sent only when the user taps Send), the **phone-GPS override** (2026-10-21, below) and **chat** (2026-10-21, below; sent only when the user taps Send)
   - pins: `ui/pin/SharePinActivity` is a share target (`ACTION_SEND text/plain`, label "MeshAnd pin") that parses coordinates out of OsmAnd's share text (`PinText.parseShared`: title line, `geo:`, `pin=`, …); only messages starting with `meshand:` are pins (the older `MeshAnd pin …` form was dropped on the user's request); the description is sent only when "Send a description" is ticked (off by default, pre-filled with OsmAnd's place name); pins are also listed in `TeamActivity`
   - it sends only `meshand: <lat>,<lon> [description]` (5 decimals, description optional, ≤ 48 UTF-8 bytes: Georgian letters are 3 bytes) with `RadioClient.sendText` on channel 0
   - `PinRepository` parses received text messages, keeps pins for 24 h (saved to disk), notifies, and tracks delivery via `MessageHandle.state`
@@ -51,6 +51,10 @@ Out of scope until asked:
     - The service adds the `location` foreground type while it's on (`FOREGROUND_SERVICE_LOCATION`). Android 14+ refuses that type in the background (sticky restart): the status is then `NeedsApp`, and `MainActivity.onResume` restarts the service to retry.
     - Fine location is requested only when the user switches it on. `ACCESS_FINE_LOCATION` no longer has `maxSdkVersion`.
     - Sharing the phone position for *other* people's GPS-less radios is still not built.
+  - **Chat** (direct messages and channel messages). Code: `data/repository/ChatRepository`, `domain/ChatRules` (pure, tested), `ui/chat/ChatPages`.
+    - Sends with `RadioClient.sendText(text, to, channel)`: broadcasts to `NodeId.BROADCAST` on the conversation's channel; a direct message goes to the node on the channel it last wrote to us on (else 0). Texts are trimmed and limited to 233 UTF-8 bytes (`ChatRules.MAX_TEXT_BYTES`, the SDK's `DATA_PAYLOAD_LEN`). Delivery is tracked via `MessageHandle.state` (direct: recipient ACK, channel: neighbour relay).
+    - Receives every `TEXT_MESSAGE_APP` packet except `meshand:` pins. Broadcast → `ChatThread.Channel(packet.channel)`, to/from our node → `ChatThread.Direct(other)`. Repeats are dropped by sender + packet id. Saved to `chat.tsv` (`StoreCodec.encodeChat`, at most 500 per conversation), with the channel names so the list makes sense offline. One notification per conversation (MessagingStyle), opening `MainActivity` with `EXTRA_OPEN_CHAT`; the conversation on screen is marked read (`setOpenThread`).
+    - Channel names come from `RadioClient.channels` (slot and name only; an empty primary name shows the modem preset, e.g. LongFast, from the LoRa config). Message texts, PSKs and channel settings are never logged.
 
 Keep the architecture simple: no DI framework, no extra Clean Architecture layers.
 
@@ -104,10 +108,11 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - **Logo:** "Summit" (Claude Design, 2026-10-05): a mesh triangle of three white nodes with an ember map pin on top, on pine `#1F5A47`. Launcher, themed and notification icons are vector drawables in `res/`; `ic_stat_mesh` is the small glyph. The README wordmarks, a 512 px icon SVG and the GitHub social preview (`social-preview.png`, 1280×640, set by hand in the repo's Settings → Social preview) are in `docs/images/`.
 - UI: Material 3 with one app theme (`ui/theme/Theme.kt`). It has a pine primary (the logo's `#1F5A47`), light and dark schemes (Settings → Appearance: System/Light/Dark, `AppSettings.themeMode`; `MeshAndTheme` also sets the system-bar icon colours and window background), and semantic `colorScheme.good`/`warning`. **Don't hard-code colours in screens.** Shared pieces are in `ui/common/Components.kt` (`SectionCard`, `HintText`, `StatusDot`, `ChoiceRow` segmented buttons, `SwitchRow`).
   - `ui/connection/` is the screen shown when not connected.
-  - The main screen has a bottom bar with 4 pages (`Tab` in `MainActivity`, a plain `rememberSaveable` state, no navigation library):
+  - The main screen has a bottom bar with 5 pages (`Tab` in `MainActivity`, a plain `rememberSaveable` state, no navigation library):
     - **Radio:** `StatusPage` (link, own GPS, OsmAnd switch, Team list button, overview), or `ConnectionScreen` when not connected
     - **Nodes:** `NodesPage`, compact cards that expand on tap, with a search box above 6 nodes
     - **Pins:** `PinsPage`, one card per pin, with a count badge on the tab
+    - **Chat:** `ChatListPage` (every channel, then direct conversations, unread badges) and `ConversationPage` (bubbles, delivery state, compose box with a byte counter). The open conversation is `chatKey` in `MainActivity`; the bottom bar hides inside a conversation. "Message" on node cards and team member cards opens a direct conversation.
     - **Settings:** `ui/settings/SettingsScreen`
     - Back from another page returns to Radio.
   - Pages live in `ui/nodes/MainPages.kt`.

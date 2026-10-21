@@ -11,8 +11,8 @@ import java.io.IOException
 private const val TAG = "MeshAnd/Store"
 
 /**
- * Trails and pins saved as small text files in the app's private storage, so they survive app
- * restarts. Nothing here is shared with other apps. Call [read]/[write] off the main thread.
+ * Trails, pins and chat messages saved as small text files in the app's private storage, so they
+ * survive app restarts. Nothing here is shared with other apps. Call [read]/[write] off the main thread.
  */
 class LocalStore(context: Context) {
     private val dir = File(context.filesDir, "store")
@@ -58,5 +58,6 @@ class LocalStore(context: Context) {
     companion object {
         const val TRAILS_FILE = "trails.tsv"
         const val PINS_FILE = "pins.tsv"
+        const val CHAT_FILE = "chat.tsv"
     }
 }

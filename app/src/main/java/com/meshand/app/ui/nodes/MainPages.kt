@@ -259,6 +259,7 @@ fun NodesPage(
     hiddenNodeCount: Int,
     osmAndShowing: Boolean,
     onShowOnOsmAnd: (MeshNode) -> Unit,
+    onMessage: (MeshNode) -> Unit,
 ) {
     val now = rememberNow()
     var query by rememberSaveable { mutableStateOf("") }
@@ -298,14 +299,19 @@ fun NodesPage(
             )
         }
         items(shown, key = { it.id }) { node ->
-            NodeCard(node, now, onShowOnOsmAnd = if (osmAndShowing && node.hasPosition) ({ onShowOnOsmAnd(node) }) else null)
+            NodeCard(
+                node,
+                now,
+                onShowOnOsmAnd = if (osmAndShowing && node.hasPosition) ({ onShowOnOsmAnd(node) }) else null,
+                onMessage = if (node.isOwnNode) null else ({ onMessage(node) }),
+            )
         }
     }
 }
 
 /** One line per node; tap for details. */
 @Composable
-private fun NodeCard(node: MeshNode, now: Instant, onShowOnOsmAnd: (() -> Unit)?) {
+private fun NodeCard(node: MeshNode, now: Instant, onShowOnOsmAnd: (() -> Unit)?, onMessage: (() -> Unit)?) {
     var expanded by rememberSaveable(node.id) { mutableStateOf(false) }
     SectionCard(Modifier.animateContentSize().clickable { expanded = !expanded }) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -340,8 +346,9 @@ private fun NodeCard(node: MeshNode, now: Instant, onShowOnOsmAnd: (() -> Unit)?
             Field("Altitude", node.altitude?.let { "$it m" } ?: "—")
             Field("SNR", node.snr?.let { String.format(Locale.US, "%.1f dB", it) } ?: "—")
             Field("Last heard", node.lastSeen?.let { formatAgo(Duration.between(it, now).seconds) } ?: "never")
-            if (onShowOnOsmAnd != null) {
-                TextButton(onClick = onShowOnOsmAnd) { Text("Show on OsmAnd") }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (onMessage != null) OutlinedButton(onClick = onMessage) { Text("Message") }
+                if (onShowOnOsmAnd != null) TextButton(onClick = onShowOnOsmAnd) { Text("Show on OsmAnd") }
             }
         }
     }

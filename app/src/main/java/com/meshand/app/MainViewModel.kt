@@ -4,6 +4,9 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.meshand.app.data.settings.ThemeMode
+import com.meshand.app.domain.model.ChatChannel
+import com.meshand.app.domain.model.ChatMessage
+import com.meshand.app.domain.model.ChatThread
 import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.domain.model.DiscoveredRadio
 import com.meshand.app.domain.model.MeshNode
@@ -51,7 +54,7 @@ data class UiState(
     val checkForUpdates: Boolean = true,
     /** Pins shared over the mesh, newest first. */
     val pins: List<Pin> = emptyList(),
-    /** Size of the saved trails and pins on this phone. */
+    /** Size of the saved trails, pins and messages on this phone. */
     val savedDataBytes: Long = 0,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
 )
@@ -84,6 +87,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val environment = MutableStateFlow(EnvironmentState())
     private val filterByService = MutableStateFlow(true)
+
+    /** Chat, read straight from the repository (the screen state above is already wide). */
+    val chatMessages: StateFlow<List<ChatMessage>> = graph.chat.messages
+    val chatChannels: StateFlow<List<ChatChannel>> = graph.chat.channels
+    val chatUnread: StateFlow<Int> = graph.chat.unreadCount
+
+    /** Every known node, also those not heard for 24 h (names for old conversations). */
+    val allNodes: StateFlow<List<MeshNode>> = repository.nodes
 
     val uiState: StateFlow<UiState> = combine(
         combine(environment, client.status, client.radios, repository.activeNodes, filterByService) { env, status, radios, nodes, filter ->
@@ -184,10 +195,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearPins() = graph.pins.clear()
 
-    /** Deletes saved trails and pins; trails restart from everyone's current position. */
+    /** Returns null when the message was handed to the radio, or why it wasn't. */
+    fun sendChat(thread: ChatThread, text: String): String? = graph.chat.send(thread, text)
+
+    fun setChatOnScreen(thread: ChatThread?) = graph.chat.setOpenThread(thread)
+
+    fun deleteChat(thread: ChatThread) = graph.chat.deleteThread(thread)
+
+    /** Deletes saved trails, pins and messages; trails restart from everyone's current position. */
     fun clearSavedData() {
         graph.trails.clearSaved()
         graph.pins.clear()
+        graph.chat.clear()
     }
 
     fun setThemeMode(mode: ThemeMode) = graph.settings.setThemeMode(mode)

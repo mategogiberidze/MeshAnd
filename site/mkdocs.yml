@@ -1,9 +1,10 @@
 # MkDocs Material config for the guides under /docs/ on the project site.
 # Don't run mkdocs directly: site/build.sh gathers docs/*.md and CHANGELOG.md into
 # build/site-docs first and puts the result next to the landing page.
+# hooks.py sets each page's <title> and description; theme/main.html adds social-preview tags.
 
-site_name: MeshAnd guides
-site_description: Guides for MeshAnd, the Android app that shows your Meshtastic team on the OsmAnd map.
+site_name: MeshAnd
+site_description: Guides for MeshAnd, the Android app that shows your Meshtastic team live on the OsmAnd map.
 site_url: https://meshand.app/docs/
 repo_url: https://github.com/mategogiberidze/MeshAnd
 repo_name: mategogiberidze/MeshAnd
@@ -20,6 +21,7 @@ nav:
 
 theme:
   name: material
+  custom_dir: theme
   logo: assets/logo.svg
   favicon: assets/logo.svg
   # System fonts, as on the landing page: no requests to Google Fonts.
@@ -56,6 +58,9 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/mategogiberidze/MeshAnd
       name: MeshAnd on GitHub
+
+hooks:
+  - hooks.py
 
 extra_css:
   - assets/extra.css

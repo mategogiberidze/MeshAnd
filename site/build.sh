@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # Builds the GitHub Pages site into build/site:
-#   /       the landing page (site/index.html)
+#   /       the landing page and other root files (site/public/), plus the favicon and the
+#           social preview image from docs/images and the logo
 #   /docs/  the guides: docs/*.md and CHANGELOG.md rendered by MkDocs Material (site/mkdocs.yml)
 # Needs the packages in site/requirements.txt. Used by .github/workflows/pages.yml.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 rm -rf build/site build/site-docs
-mkdir -p build/site build/site-docs
+mkdir -p build/site/images build/site-docs
 
 # The guides' sources: our overview page and assets, the docs, and the changelog.
 cp -R site/guides/. build/site-docs/
@@ -19,4 +20,7 @@ rm build/site-docs/*.bak
 
 # mkdocs is pinned below 2.0 in requirements.txt, so Material's MkDocs 2.0 warning doesn't apply.
 NO_MKDOCS_2_WARNING=true mkdocs build --strict --config-file site/mkdocs.yml --site-dir "$PWD/build/site/docs"
-cp site/index.html build/site/
+
+cp -R site/public/. build/site/
+cp site/guides/assets/logo.svg build/site/favicon.svg
+cp docs/images/social-preview.png build/site/images/

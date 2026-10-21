@@ -79,7 +79,7 @@ adb logcat -s MeshAnd MeshAnd/SDK
   - `v*` tags: only admins may create, move or delete them.
   - The repo admin (the owner's account, which this agent pushes with) bypasses both, so direct pushes to `main` and release tags still work. GitHub notes the bypass.
   - Never force-push `main`.
-- **CI:** `.github/workflows/ci.yml` runs tests, lint and a debug build on pushes to `main` and on PRs.
+- **CI:** `.github/workflows/ci.yml` runs tests, lint and a debug build on pushes to `main` and on PRs that change project files. A `changes` job (`dorny/paths-filter`) skips `build` when only Markdown, `docs/`, `site/`, `LICENSE`, issue/discussion templates or the Pages/Claude workflows changed; a skipped `build` still satisfies the ruleset's required check. Add new non-build paths to its exclude list.
 - **Release notes:** `CHANGELOG.md`, one `## <version>` section per release, written for app users. The release workflow publishes that section (plus a download line and a compare link) as the GitHub Release text, and fails if it's missing. **Add the section before tagging.**
 - **Releases:** `.github/workflows/release.yml` runs on a `v*` tag. It requires the tag to equal `versionName`, signs using the secrets `MESHAND_KEYSTORE_BASE64` and `MESHAND_KEYSTORE_PASSWORD`, and publishes `MeshAnd-<version>.apk` to GitHub Releases.
 - **Website:** the project site at https://meshand.app/, published by `.github/workflows/pages.yml` on pushes to `main` that touch `site/`, `docs/` or `CHANGELOG.md`, or by hand (Run workflow). The repo's Settings → Pages → Source must be **GitHub Actions**.

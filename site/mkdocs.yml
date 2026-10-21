@@ -4,7 +4,7 @@
 
 site_name: MeshAnd guides
 site_description: Guides for MeshAnd, the Android app that shows your Meshtastic team on the OsmAnd map.
-site_url: https://mategogiberidze.github.io/MeshAnd/docs/
+site_url: https://meshand.app/docs/
 repo_url: https://github.com/mategogiberidze/MeshAnd
 repo_name: mategogiberidze/MeshAnd
 edit_uri: ""
@@ -16,7 +16,7 @@ nav:
   - Radio setup: radio-setup.md
   - What's new: changelog.md
   - Developing: development.md
-  - MeshAnd website: https://mategogiberidze.github.io/MeshAnd/
+  - MeshAnd website: https://meshand.app/
 
 theme:
   name: material
@@ -50,7 +50,7 @@ theme:
 
 extra:
   # The logo goes back to the landing page.
-  homepage: https://mategogiberidze.github.io/MeshAnd/
+  homepage: https://meshand.app/
   generator: false
   social:
     - icon: fontawesome/brands/github

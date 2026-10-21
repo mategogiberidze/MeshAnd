@@ -13,7 +13,7 @@
 ![Android 7+](https://img.shields.io/badge/Android-7%2B-3DDC84?logo=android&logoColor=white)
 
 **[Download the APK](https://github.com/mategogiberidze/MeshAnd/releases/latest)** ·
-[Website](https://mategogiberidze.github.io/MeshAnd/) ·
+[Website](https://meshand.app/) ·
 [Set up your radios](docs/radio-setup.md) ·
 [What's new](CHANGELOG.md) ·
 [Ask a question](https://github.com/mategogiberidze/MeshAnd/discussions) ·

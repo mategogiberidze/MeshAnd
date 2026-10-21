@@ -2,7 +2,7 @@
 
 MeshAnd connects to your Meshtastic radio over Bluetooth and shows everyone in your mesh on the
 OsmAnd map. These guides help you set up the radios, see what changed in each version, and build
-the app yourself. New here? Start on the [MeshAnd website](https://mategogiberidze.github.io/MeshAnd/)
+the app yourself. New here? Start on the [MeshAnd website](https://meshand.app/)
 for what the app does and how to install it.
 
 <div class="grid cards" markdown>

@@ -82,9 +82,13 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - **CI:** `.github/workflows/ci.yml` runs tests, lint and a debug build on pushes to `main` and on PRs.
 - **Release notes:** `CHANGELOG.md`, one `## <version>` section per release, written for app users. The release workflow publishes that section (plus a download line and a compare link) as the GitHub Release text, and fails if it's missing. **Add the section before tagging.**
 - **Releases:** `.github/workflows/release.yml` runs on a `v*` tag. It requires the tag to equal `versionName`, signs using the secrets `MESHAND_KEYSTORE_BASE64` and `MESHAND_KEYSTORE_PASSWORD`, and publishes `MeshAnd-<version>.apk` to GitHub Releases.
-- **Website:** `site/index.html` is the project site, one static page with no build step. `.github/workflows/pages.yml` publishes `site/` to GitHub Pages (https://mategogiberidze.github.io/MeshAnd/) on pushes to `main` that touch `site/`, or by hand (Run workflow). The repo's Settings → Pages → Source must be **GitHub Actions**.
-  - It links to the guides on GitHub instead of copying them. The download button asks the GitHub API for `releases/latest`, so it needs no change per release.
-  - Features not yet in a release carry a "Next version" badge (currently Chat and Phone GPS). **When releasing, remove those badges and the note below the feature list.** Keep the text in step with `README.md` and `CHANGELOG.md`.
+- **Website:** the project site at https://mategogiberidze.github.io/MeshAnd/, published by `.github/workflows/pages.yml` on pushes to `main` that touch `site/`, `docs/` or `CHANGELOG.md`, or by hand (Run workflow). The repo's Settings → Pages → Source must be **GitHub Actions**.
+  - `/` is `site/index.html`, one hand-written static page. `/docs/` holds the guides: `site/build.sh` copies `docs/*.md`, `CHANGELOG.md` (as `changelog.md`) and `site/guides/` (overview page, logo, CSS) into `build/site-docs/` and renders them with MkDocs Material (`site/mkdocs.yml`, versions pinned in `site/requirements.txt`, `--strict`). The `.md` files stay the only source; don't copy guide text into `site/`.
+  - Material for MkDocs is in maintenance mode and incompatible with MkDocs 2.0, so keep `mkdocs` pinned below 2.0.
+  - Preview: `pip install -r site/requirements.txt && ./site/build.sh`, then `python3 -m http.server -d build/site`.
+  - A link between guides on GitHub (`../CHANGELOG.md`) is rewritten by `build.sh`; a new kind of cross-folder link needs the same, or `--strict` fails.
+  - The download button asks the GitHub API for `releases/latest`, so it needs no change per release.
+  - Features not yet in a release carry a "Next version" badge on the landing page (currently Chat and Phone GPS). **When releasing, remove those badges and the note below the feature list.** Keep the text in step with `README.md` and `CHANGELOG.md`.
 
 ## Architecture (`app/src/main/java/com/meshand/app/`)
 - `MeshAndApp.kt`: the `Application` class. Owns `AppGraph` (settings, client, repository, OsmAnd bridge) for the whole process, wired by hand.

@@ -1,6 +1,7 @@
 name: Pages
 
-# Publishes the static project site in site/ to GitHub Pages.
+# Publishes the project site to GitHub Pages: the landing page (site/index.html) at the root
+# and the guides (docs/*.md, CHANGELOG.md) under /docs/, built by site/build.sh with MkDocs.
 # Needs Settings → Pages → Source: GitHub Actions.
 
 on:
@@ -8,6 +9,8 @@ on:
     branches: [main]
     paths:
       - site/**
+      - docs/**
+      - CHANGELOG.md
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -30,11 +33,22 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: site/requirements.txt
+
+      - name: Build the site
+        run: |
+          pip install -r site/requirements.txt
+          ./site/build.sh
+
       - uses: actions/configure-pages@v6
 
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: site
+          path: build/site
 
       - id: deployment
         uses: actions/deploy-pages@v5

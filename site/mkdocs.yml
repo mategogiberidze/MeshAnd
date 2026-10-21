@@ -1,0 +1,75 @@
+# MkDocs Material config for the guides under /docs/ on the project site.
+# Don't run mkdocs directly: site/build.sh gathers docs/*.md and CHANGELOG.md into
+# build/site-docs first and puts the result next to the landing page.
+
+site_name: MeshAnd guides
+site_description: Guides for MeshAnd, the Android app that shows your Meshtastic team on the OsmAnd map.
+site_url: https://mategogiberidze.github.io/MeshAnd/docs/
+repo_url: https://github.com/mategogiberidze/MeshAnd
+repo_name: mategogiberidze/MeshAnd
+edit_uri: ""
+docs_dir: ../build/site-docs
+copyright: MeshAnd is free software under the GPL-3.0. It isn't affiliated with Meshtastic or OsmAnd.
+
+nav:
+  - Overview: index.md
+  - Radio setup: radio-setup.md
+  - What's new: changelog.md
+  - Developing: development.md
+  - MeshAnd website: https://mategogiberidze.github.io/MeshAnd/
+
+theme:
+  name: material
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+  # System fonts, as on the landing page: no requests to Google Fonts.
+  font: false
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Dark theme
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Light theme
+  features:
+    - navigation.footer
+    - navigation.top
+    - toc.follow
+    - search.highlight
+    - content.code.copy
+
+extra:
+  # The logo goes back to the landing page.
+  homepage: https://mategogiberidze.github.io/MeshAnd/
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/mategogiberidze/MeshAnd
+      name: MeshAnd on GitHub
+
+extra_css:
+  - assets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg

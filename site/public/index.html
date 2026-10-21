@@ -200,7 +200,7 @@ section { padding-block: 88px; }
 
 /* Features */
 .alt { background: var(--surface-2); border-block: 1px solid var(--line); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; margin-top: 48px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-top: 48px; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px; box-shadow: var(--shadow); }
 .card .ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 14px; background: var(--accent-soft); color: var(--on-accent-soft); }
 .card .ico svg { width: 22px; height: 22px; }
@@ -290,6 +290,7 @@ footer p { max-width: 60em; }
   <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-5 4.5V16.4A2.5 2.5 0 0 1 4 14.5v-9Z"/><path d="M8 8h8M8 11.5h5"/></symbol>
   <symbol id="i-locate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 1.5V5M12 19v3.5M1.5 12H5M19 12h3.5"/></symbol>
   <symbol id="i-sat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m8.5 8.5 7 7"/><rect x="9.6" y="9.6" width="4.8" height="4.8" rx="1" transform="rotate(45 12 12)"/><path d="m4.2 7.3 3.1-3.1 3 3-3.1 3.1zM13.7 16.8l3.1-3.1 3 3-3.1 3.1z"/><path d="M15 3.5a5.5 5.5 0 0 1 5.5 5.5"/></symbol>
+  <symbol id="i-battery" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="17" height="10" rx="2.2"/><path d="M22 10.5v3"/><path d="M6 10.5v3M9.5 10.5v3M13 10.5v3"/></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10a6 6 0 1 1 12 0c0 5 2 6.5 2 6.5H4S6 15 6 10Z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" stroke-width="1.8"/><path d="m7.5 12.5 3 3 6-6.5"/></symbol>
   <symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10" stroke-width="1.8"/><path d="M8 12h8"/></symbol>
@@ -460,6 +461,12 @@ footer p { max-width: 60em; }
           <p>Choose who to watch, and get a notification if someone hasn't been heard for
             15 minutes to 2 hours.</p>
         </article>
+        <article class="card">
+          <div class="ico"><svg aria-hidden="true"><use href="#i-battery"/></svg></div>
+          <h3>Radio details <span class="badge">Next version</span></h3>
+          <p>See your radio's battery (or "Plugged in"), how busy the channel is, your own airtime,
+            how long it has been running, and its hardware, firmware, role and LoRa settings.</p>
+        </article>
       </div>
       <ul class="also">
         <li><span><b>Stays connected in your pocket.</b> Works with the screen off, reconnects by
@@ -473,8 +480,8 @@ footer p { max-width: 60em; }
         <li><span><b>No account, no server.</b> Its only internet use is checking GitHub for a new
           version, and you can switch that off.</span></li>
       </ul>
-      <p class="note">Chat and phone GPS are finished and being field-tested. They'll arrive in the
-        next release; the current download doesn't have them yet.</p>
+      <p class="note">Chat, phone GPS and radio details are built and being field-tested. They'll
+        arrive in the next release; the current download doesn't have them yet.</p>
     </div>
   </section>
 

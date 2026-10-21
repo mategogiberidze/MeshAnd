@@ -90,7 +90,7 @@ adb logcat -s MeshAnd MeshAnd/SDK
   - Preview: `pip install -r site/requirements.txt && ./site/build.sh`, then `python3 -m http.server -d build/site`.
   - A link between guides on GitHub (`../CHANGELOG.md`) is rewritten by `build.sh`; a new kind of cross-folder link needs the same, or `--strict` fails.
   - The download button asks the GitHub API for `releases/latest`, so it needs no change per release.
-  - Features not yet in a release carry a "Next version" badge on the landing page (currently Chat and Phone GPS). **When releasing, remove those badges and the note below the feature list.** Keep the text in step with `README.md` and `CHANGELOG.md`.
+  - Features not yet in a release carry a "Next version" badge on the landing page (currently Chat, Phone GPS and Radio details). **When releasing, remove those badges and the note below the feature list.** Keep the text in step with `README.md` and `CHANGELOG.md`.
 
 ## Architecture (`app/src/main/java/com/meshand/app/`)
 - `MeshAndApp.kt`: the `Application` class. Owns `AppGraph` (settings, client, repository, OsmAnd bridge) for the whole process, wired by hand.

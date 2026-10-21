@@ -28,14 +28,15 @@ object PhonePosition {
         altitudeHae: Double?,
         altitudeMsl: Double?,
         timeMillis: Long,
-    ): Position = Position(
-        latitude_i = (latitude * 1e7).roundToInt(),
-        longitude_i = (longitude * 1e7).roundToInt(),
-        altitude = (altitudeMsl ?: altitudeHae)?.roundToInt(),
-        altitude_hae = altitudeHae?.roundToInt(),
-        time = (timeMillis / 1000).toInt(),
-        location_source = Position.LocSource.LOC_EXTERNAL,
-    )
+    ): Position = Position.build {
+        // Protobufs 2.8 are builder-only (no public constructors).
+        latitude_i((latitude * 1e7).roundToInt())
+        longitude_i((longitude * 1e7).roundToInt())
+        altitude((altitudeMsl ?: altitudeHae)?.roundToInt())
+        altitude_hae(altitudeHae?.roundToInt())
+        time((timeMillis / 1000).toInt())
+        location_source(Position.LocSource.LOC_EXTERNAL)
+    }
 
     /** Whether a fix is worth sending now. [lastSentAtMs] is null before the first send. */
     fun isUsable(accuracyM: Float?, fixAgeMs: Long, lastSentAtMs: Long?, nowMs: Long): Boolean =

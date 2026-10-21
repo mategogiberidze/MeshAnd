@@ -33,10 +33,10 @@ app/src/main/java/com/meshand/app/
 ```
 
 Main libraries:
-- **[Meshtastic SDK](https://github.com/meshtastic/meshtastic-sdk)** 0.1.0
+- **[Meshtastic SDK](https://github.com/meshtastic/meshtastic-sdk)** 0.2.0
   (`org.meshtastic:sdk-core`, `sdk-transport-ble`). It's pre-1.0 and GPL-3.0. Its declared
   minSdk is 26, but its code works on 24, so the manifest overrides the minimum.
-- **Kable** 0.44.1 for scanning, the same BLE library the SDK uses.
+- **Kable** 0.45.0 for scanning, the same BLE library the SDK uses.
 - **OsmAnd AIDL client** 5.4, vendored in `app/libs/` because it isn't on Maven Central.
 
 Notes on things the libraries don't do:

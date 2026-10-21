@@ -20,6 +20,11 @@ using the app, not for developers.
   messages. Messages are saved on the phone. A message can be up to 233 bytes: about 230 Latin
   letters, or about 77 Georgian letters.
 
+### Changed
+
+- MeshAnd now uses version 0.2.0 of the Meshtastic SDK (the library that talks to your radio).
+  Nothing changes in how you use the app.
+
 ## 0.2.0
 
 Trails, shared pins, a GPS check, and a new look.

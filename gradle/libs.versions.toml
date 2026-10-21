@@ -6,9 +6,9 @@ activityCompose = "1.13.0"
 lifecycle = "2.11.0"
 coreKtx = "1.19.1"
 # Official Meshtastic SDK (pre-1.0, pinned exactly). https://github.com/meshtastic/meshtastic-sdk
-meshtasticSdk = "0.1.0"
-# Same Kable version the Meshtastic SDK 0.1.0 BLE transport is built against.
-kable = "0.44.1"
+meshtasticSdk = "0.2.0"
+# Same Kable version the Meshtastic SDK 0.2.0 BLE transport is built against.
+kable = "0.45.0"
 junit = "4.13.2"
 desugarJdkLibs = "2.1.5"
 

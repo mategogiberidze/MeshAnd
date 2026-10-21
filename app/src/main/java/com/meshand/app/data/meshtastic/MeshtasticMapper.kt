@@ -9,7 +9,7 @@ import org.meshtastic.sdk.asPosition
 import java.time.Instant
 
 /**
- * What a single live mesh packet tells us about its sender. The SDK (0.1.0) merges handshake
+ * What a single live mesh packet tells us about its sender. The SDK (0.2.0) merges handshake
  * NodeInfo frames and telemetry into its node map, but not POSITION_APP / NODEINFO_APP packets,
  * nor per-packet SNR/hops/last-heard — so we fold those in ourselves.
  */

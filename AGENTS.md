@@ -121,12 +121,14 @@ adb logcat -s MeshAnd MeshAnd/SDK
     - bottom bar with **Team** and **Pins**; Pins reuses `PinsPage`, with Navigate
     - member cards show the distance, Show on map / Navigate, and Trail/Alert chips
 
-## Meshtastic SDK facts (verified against the 0.1.0 sources; don't assume older APIs)
-- **Dependency:** `org.meshtastic:sdk-core` + `sdk-transport-ble` **0.1.0**. It is pre-1.0 and GPL-3.0. Repo: github.com/meshtastic/meshtastic-sdk.
+## Meshtastic SDK facts (verified against the 0.2.0 sources; don't assume older APIs)
+- **Dependency:** `org.meshtastic:sdk-core` + `sdk-transport-ble` **0.2.0** (updated from 0.1.0 on 2026-10-22). It is pre-1.0 and GPL-3.0. Repo: github.com/meshtastic/meshtastic-sdk.
   - Protobufs are Wire-generated in `org.meshtastic.proto`, with snake_case fields (`last_heard`, `latitude_i`, …).
-  - Kable is pinned to 0.44.1, the version the SDK is built against.
+  - Kable is pinned to 0.45.0, the version the SDK is built against.
+  - **Protobufs 2.8 are builder-only:** generated classes have private constructors and no `copy`. Build them with `Position.build { latitude_i(…); time(…) }` (or `newBuilder()` to change one), also in tests.
+  - `MeshPacket.rx_rssi` is `Int?` since protobufs 2.8.
 - **Never use** the deprecated Meshtastic Android `IMeshService`/AIDL API.
-- **Live packets are not merged by the SDK.** SDK 0.1.0 does **not** fold live `POSITION_APP` / `NODEINFO_APP` packets, per-packet SNR/hops, or last-heard into its NodeDB. `NodeRepository` merges these itself, and live data wins over NodeDB fields.
+- **Live packets are not merged by the SDK.** SDK 0.1.0 and 0.2.0 do **not** fold live `POSITION_APP` / `NODEINFO_APP` packets, per-packet SNR/hops, or last-heard into its NodeDB. `NodeRepository` merges these itself, and live data wins over NodeDB fields.
 - **Clock sync is off.** `autoSyncTimeOnConnect(false)` keeps Phase 1 read-only toward the radio.
 - **Pairing:** the T-Beam shows a random 6-digit PIN on its screen. Its GATT characteristics need a bonded, encrypted link.
 - **Unit conventions:**

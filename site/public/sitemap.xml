@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The landing page. The guides have their own sitemap at /docs/sitemap.xml (made by MkDocs). -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://meshand.app/</loc>
+  </url>
+</urlset>

@@ -3,20 +3,63 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MeshAnd: your Meshtastic team on the OsmAnd map</title>
-<meta name="description" content="MeshAnd is a free Android app that connects to your Meshtastic radio over Bluetooth and shows your whole team live on the OsmAnd map. No internet or mobile coverage needed.">
+<title>MeshAnd: your Meshtastic team live on the OsmAnd map</title>
+<meta name="description" content="Free, open-source Android app: connect your Meshtastic radio over Bluetooth and see your whole team live on the OsmAnd map. Works offline, no coverage needed.">
 <meta name="theme-color" content="#1F5A47">
 <meta name="color-scheme" content="light dark">
 <link rel="canonical" href="https://meshand.app/">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='18 18 72 72'%3E%3Crect x='18' y='18' width='72' height='72' rx='14' fill='%231F5A47'/%3E%3Cpath d='M35 73L54 55L73 73Z' fill='none' stroke='%23fff' stroke-width='5' stroke-linejoin='round'/%3E%3Cpath d='M54 55L45.3 43.7A11 11 0 1 1 62.7 43.7ZM49.5 37a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0Z' fill='%23F07B4F' fill-rule='evenodd'/%3E%3Ccircle cx='35' cy='73' r='5.5' fill='%23fff'/%3E%3Ccircle cx='73' cy='73' r='5.5' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:type" content="website">
-<meta property="og:title" content="MeshAnd: your Meshtastic team on the OsmAnd map">
+<meta property="og:site_name" content="MeshAnd">
+<meta property="og:locale" content="en_GB">
+<meta property="og:title" content="MeshAnd: your Meshtastic team live on the OsmAnd map">
 <meta property="og:description" content="Free Android app: see everyone in your Meshtastic mesh live on the OsmAnd map. No internet or mobile coverage needed.">
 <meta property="og:url" content="https://meshand.app/">
-<meta property="og:image" content="https://raw.githubusercontent.com/mategogiberidze/MeshAnd/main/docs/images/social-preview.png">
+<meta property="og:image" content="https://meshand.app/images/social-preview.png">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="The MeshAnd logo next to a phone showing teammates as coloured dots on a topographic map.">
 <meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://meshand.app/#website",
+      "name": "MeshAnd",
+      "url": "https://meshand.app/",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://meshand.app/#app",
+      "name": "MeshAnd",
+      "url": "https://meshand.app/",
+      "description": "Free, open-source Android app that connects to your Meshtastic radio over Bluetooth and shows your whole team live on the OsmAnd map, without internet or mobile coverage.",
+      "applicationCategory": "TravelApplication",
+      "operatingSystem": "Android 7.0 or newer",
+      "image": "https://meshand.app/images/social-preview.png",
+      "downloadUrl": "https://github.com/mategogiberidze/MeshAnd/releases/latest",
+      "releaseNotes": "https://meshand.app/docs/changelog/",
+      "softwareHelp": "https://meshand.app/docs/",
+      "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "featureList": [
+        "Teammates on the OsmAnd map, updated live",
+        "Team list inside OsmAnd, nearest first, with navigation",
+        "Trails of the last 30 minutes to 6 hours",
+        "Shared map pins",
+        "GPS health check",
+        "Alerts when a teammate hasn't been heard"
+      ],
+      "sameAs": ["https://github.com/mategogiberidze/MeshAnd"]
+    }
+  ]
+}
+</script>
 <style>
 :root {
   --pine: #1F5A47;
@@ -201,6 +244,15 @@ section { padding-block: 88px; }
 @media (max-width: 720px) { .know { grid-template-columns: 1fr; } }
 .know div { border-top: 2px solid var(--line); padding-top: 16px; }
 .know p { color: var(--muted); margin-top: 6px; font-size: .97rem; }
+
+/* FAQ */
+.faq { margin-top: 40px; max-width: 820px; display: grid; gap: 10px; }
+.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.faq summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 20px; font-weight: 700; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; flex: none; font-size: 1.4rem; font-weight: 400; line-height: 1; color: var(--accent); }
+.faq details[open] summary::after { content: "\2212"; }
+.faq details p { padding: 0 20px 18px; color: var(--muted); }
 
 /* Links */
 .links { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 40px; }
@@ -532,14 +584,61 @@ footer p { max-width: 60em; }
     </div>
   </section>
 
-  <section id="docs" class="alt">
+  <section id="faq" class="alt">
+    <div class="wrap">
+      <p class="eyebrow">Questions</p>
+      <h2>Frequently asked</h2>
+      <div class="faq">
+        <details>
+          <summary>Does MeshAnd need internet or mobile coverage?</summary>
+          <p>No. Positions travel between the radios over LoRa, and your phone talks to your own
+            radio over Bluetooth. OsmAnd works offline once you've downloaded the maps for your
+            region. MeshAnd's only internet use is its update check, which you can switch off.</p>
+        </details>
+        <details>
+          <summary>Which Meshtastic radios work with MeshAnd?</summary>
+          <p>MeshAnd was built and tested with the LILYGO T-Beam Supreme. Other Meshtastic radios
+            with Bluetooth and GPS should work the same way, including ones you build yourself.
+            Radios without GPS still appear, but have no position to put on the map.</p>
+        </details>
+        <details>
+          <summary>Do I need OsmAnd Pro?</summary>
+          <p>No. The free OsmAnd from Google Play is enough, and OsmAnd Pro works the same way. The
+            first time, allow MeshAnd in <b>OsmAnd → Menu → Plugins</b>.</p>
+        </details>
+        <details>
+          <summary>Do I still need the Meshtastic app?</summary>
+          <p>Only to set up the radios: region, a private channel, role and position settings.
+            MeshAnd never changes your radio's settings. Day to day, MeshAnd is the app connected
+            to your radio, and a radio talks to only one app at a time.</p>
+        </details>
+        <details>
+          <summary>How often do teammates move on the map?</summary>
+          <p>As often as their radios send a position. With the default settings that's only about
+            once an hour; with the settings in the <a href="docs/radio-setup/">radio setup guide</a>,
+            a walking teammate updates about every minute.</p>
+        </details>
+        <details>
+          <summary>Is there an iPhone version?</summary>
+          <p>No. Only OsmAnd for Android lets other apps draw on its map. Teammates with an iPhone
+            can use the Meshtastic iOS app, and their radios still show up in MeshAnd.</p>
+        </details>
+        <details>
+          <summary>Is MeshAnd free?</summary>
+          <p>Yes. It's free software under the GPL-3.0, with no account and no server. The source
+            code is on <a href="https://github.com/mategogiberidze/MeshAnd">GitHub</a>.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="docs">
     <div class="wrap">
       <p class="eyebrow">Guides and source</p>
       <h2>Learn more</h2>
       <div class="links">
         <a href="docs/radio-setup/"><b>Radio setup guide</b><span>Channel, role and position settings for a moving team.</span></a>
         <a href="docs/changelog/"><b>What's new</b><span>Changes in every version, written for app users.</span></a>
-        <a href="docs/"><b>All guides</b><span>Radio setup, what's new and developing, in one place.</span></a>
         <a href="https://github.com/mategogiberidze/MeshAnd/releases"><b>All releases</b><span>Every version as a ready-to-install APK.</span></a>
         <a href="https://github.com/mategogiberidze/MeshAnd"><b>Source code</b><span>The full app on GitHub. Pull requests welcome.</span></a>
         <a href="docs/development/"><b>Developer guide</b><span>Building it yourself and how the code is organised.</span></a>

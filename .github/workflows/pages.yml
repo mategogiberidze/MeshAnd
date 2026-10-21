@@ -1,6 +1,6 @@
 name: Pages
 
-# Publishes the project site to GitHub Pages: the landing page (site/index.html) at the root
+# Publishes the project site to GitHub Pages: the landing page (site/public/) at the root
 # and the guides (docs/*.md, CHANGELOG.md) under /docs/, built by site/build.sh with MkDocs.
 # Needs Settings → Pages → Source: GitHub Actions.
 

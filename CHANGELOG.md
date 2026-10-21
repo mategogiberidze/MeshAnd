@@ -4,6 +4,16 @@ What changed in each MeshAnd version. The section for a version becomes the desc
 [GitHub Release](https://github.com/mategogiberidze/MeshAnd/releases), so write it for people
 using the app, not for developers.
 
+## Unreleased
+
+### New
+
+- **Use phone GPS for your radio.** If your radio's GPS is stuck (indoors, in a car, or broken),
+  MeshAnd can give it your phone's location instead. Tap **Use phone GPS** on the Radio page, or
+  switch it on in **Settings → Phone GPS**. Your radio shares the position with the team on its
+  usual schedule, so it uses no extra airtime. It's off until you switch it on, and MeshAnd asks
+  for location permission at that point.
+
 ## 0.2.0
 
 Trails, shared pins, a GPS check, and a new look.

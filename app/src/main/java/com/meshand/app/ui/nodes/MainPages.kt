@@ -43,6 +43,7 @@ import com.meshand.app.domain.PositionAge
 import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.domain.model.MeshNode
 import com.meshand.app.domain.model.OsmAndStatus
+import com.meshand.app.domain.model.PhoneGpsStatus
 import com.meshand.app.domain.model.Pin
 import com.meshand.app.ui.common.ColorDot
 import com.meshand.app.ui.common.DistanceBadge
@@ -81,6 +82,8 @@ fun StatusPage(
     nodes: List<MeshNode>,
     osmAnd: OsmAndStatus,
     pinCount: Int,
+    phoneGps: PhoneGpsStatus,
+    onUsePhoneGpsChange: (Boolean) -> Unit,
     onDisconnect: () -> Unit,
     onOsmAndEnabledChange: (Boolean) -> Unit,
     onOpenTeam: () -> Unit,
@@ -93,7 +96,7 @@ fun StatusPage(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { StatusCard(status, nodes, osmAnd, now, onDisconnect, onOsmAndEnabledChange) }
+        item { StatusCard(status, nodes, osmAnd, phoneGps, now, onDisconnect, onOsmAndEnabledChange, onUsePhoneGpsChange) }
         item {
             Button(onClick = onOpenTeam, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
                 Icon(painterResource(R.drawable.ic_group), contentDescription = null)
@@ -135,9 +138,11 @@ private fun StatusCard(
     status: ConnectionStatus,
     nodes: List<MeshNode>,
     osmAnd: OsmAndStatus,
+    phoneGps: PhoneGpsStatus,
     now: Instant,
     onDisconnect: () -> Unit,
     onOsmAndEnabledChange: (Boolean) -> Unit,
+    onUsePhoneGpsChange: (Boolean) -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
     SectionCard {
@@ -193,8 +198,13 @@ private fun StatusCard(
                 if (gps.level != GpsHealth.Level.GOOD && gps.level != GpsHealth.Level.NONE && !gps.exact) {
                     HintText("Tip: switch on \"Timestamp\" in the radio's position flags for exact GPS times.")
                 }
+                if (phoneGps == PhoneGpsStatus.Off && gps.level != GpsHealth.Level.GOOD) {
+                    HintText("Radio's GPS stuck? Your phone can stand in for it.")
+                    OutlinedButton(onClick = { onUsePhoneGpsChange(true) }) { Text("Use phone GPS") }
+                }
             }
         }
+        if (phoneGps != PhoneGpsStatus.Off) PhoneGpsRow(phoneGps, now, onUsePhoneGpsChange)
         HorizontalDivider(color = colors.outlineVariant)
 
         // OsmAnd
@@ -210,6 +220,35 @@ private fun StatusCard(
             is OsmAndStatus.Error -> osmAnd.message to colors.error
         }
         if (osmText != null) HintText(osmText, color = osmColor)
+    }
+}
+
+/** What the phone-GPS override is doing, with a way to stop it. */
+@Composable
+private fun PhoneGpsRow(status: PhoneGpsStatus, now: Instant, onUsePhoneGpsChange: (Boolean) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val (line, color) = when (status) {
+        is PhoneGpsStatus.Sending ->
+            "Sending the phone's position · ${formatAgo(Duration.between(status.lastSentAt, now).seconds)} · ±${status.accuracyMeters} m" to colors.good
+        PhoneGpsStatus.WaitingForFix -> "Waiting for the phone's GPS…" to colors.onSurfaceVariant
+        PhoneGpsStatus.WaitingForRadio -> "Waiting for the radio" to colors.onSurfaceVariant
+        PhoneGpsStatus.LocationOff -> "The phone's Location is off. Switch it on in quick settings." to colors.warning
+        PhoneGpsStatus.NeedsApp -> "Paused by Android in the background. Open MeshAnd to resume." to colors.warning
+        PhoneGpsStatus.NoPermission -> "MeshAnd needs permission to use the phone's location." to colors.warning
+        PhoneGpsStatus.Off -> return
+    }
+    Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        StatusDot(color, Modifier.padding(top = 6.dp))
+        Column(Modifier.weight(1f)) {
+            Text("Phone GPS → radio", style = MaterialTheme.typography.labelLarge, color = colors.onSurfaceVariant)
+            Text(line, style = MaterialTheme.typography.bodyLarge, color = color)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (status == PhoneGpsStatus.NoPermission) {
+                    Button(onClick = { onUsePhoneGpsChange(true) }) { Text("Allow") }
+                }
+                OutlinedButton(onClick = { onUsePhoneGpsChange(false) }) { Text("Stop") }
+            }
+        }
     }
 }
 

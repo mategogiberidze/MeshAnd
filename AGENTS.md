@@ -40,12 +40,17 @@ Out of scope until asked:
 - MQTT, backend, database, auth
 - messaging, waypoints, telemetry history
 - auto-start at boot, fancy UI
-- sending our own position or other data to the mesh. The app is read-only toward the radio, with one exception the user asked for on 2026-10-04: **pins**, sent only when the user taps Send
+- sending our own position or other data to the mesh. The app is read-only toward the radio, with two exceptions the user asked for: **pins** (2026-10-04, sent only when the user taps Send) and the **phone-GPS override** (2026-10-21, below)
   - pins: `ui/pin/SharePinActivity` is a share target (`ACTION_SEND text/plain`, label "MeshAnd pin") that parses coordinates out of OsmAnd's share text (`PinText.parseShared`: title line, `geo:`, `pin=`, …); only messages starting with `meshand:` are pins (the older `MeshAnd pin …` form was dropped on the user's request); the description is sent only when "Send a description" is ticked (off by default, pre-filled with OsmAnd's place name); pins are also listed in `TeamActivity`
   - it sends only `meshand: <lat>,<lon> [description]` (5 decimals, description optional, ≤ 48 UTF-8 bytes: Georgian letters are 3 bytes) with `RadioClient.sendText` on channel 0
   - `PinRepository` parses received text messages, keeps pins for 24 h (saved to disk), notifies, and tracks delivery via `MessageHandle.state`
   - `OsmAndBridge` draws pins on a second layer (`meshand_pins`) with Navigate/Remove point-menu buttons. The layer uses OsmAnd image points (`isImagePoints`): OsmAnd draws its pin-shaped marker around an image loaded from `POINT_IMAGE_URI_PARAM` via `ContentResolver`, served by `PinIconProvider` (`content://<pkg>.pinicons/<rrggbb>.png`, generated, read-only, exported). The zoom bands are circle 1–6, small 7–11, big 12+. OsmAnd's `updateMapLayer` does **not** copy `imagePoints` (only points and zoom bounds), so the pins layer is removed and re-added once per OsmAnd connection
-  - **Phone-GPS sharing for GPS-less radios: the user explicitly said "do not do this yet".**
+  - **Phone-GPS override** (opt-in, off by default: Settings → Phone GPS, or "Use phone GPS" on the Radio page when the radio's GPS isn't GOOD). Code is in `data/phonegps/`:
+    - `PhoneGpsFeeder` reads `LocationManager` `GPS_PROVIDER` fixes every 30 s (no Play Services). It sends a `POSITION_APP` packet **to our own node number** on channel 0 (`location_source = LOC_EXTERNAL`). Fixes worse than 100 m, older than 60 s, or less than 15 s after the last send are skipped (`PhonePosition`, unit-tested). Coordinates are never logged.
+    - Firmware (master, checked 2026-10-21): a packet to the local node never goes over LoRa. `PositionModule` stores it as the radio's own position whatever `gps_mode` is, unless `fixed_position` is on. The radio broadcasts it on its usual interval or smart-broadcast schedule. If the radio's GPS has a fix too, the two take turns. PhoneAPI drops phone positions sent less than 10 s apart. The `time` field also sets the radio's clock.
+    - The service adds the `location` foreground type while it's on (`FOREGROUND_SERVICE_LOCATION`). Android 14+ refuses that type in the background (sticky restart): the status is then `NeedsApp`, and `MainActivity.onResume` restarts the service to retry.
+    - Fine location is requested only when the user switches it on. `ACCESS_FINE_LOCATION` no longer has `maxSdkVersion`.
+    - Sharing the phone position for *other* people's GPS-less radios is still not built.
 
 Keep the architecture simple: no DI framework, no extra Clean Architecture layers.
 

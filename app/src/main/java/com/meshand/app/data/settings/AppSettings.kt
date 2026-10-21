@@ -67,6 +67,15 @@ class AppSettings(context: Context) {
         _showOwnRadioOnMap.value = show
     }
 
+    /** Feed the phone's location to the radio as its own position (for a stuck radio GPS). */
+    private val _usePhoneGps = MutableStateFlow(prefs.getBoolean(KEY_USE_PHONE_GPS, false))
+    val usePhoneGps: StateFlow<Boolean> = _usePhoneGps.asStateFlow()
+
+    fun setUsePhoneGps(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_USE_PHONE_GPS, enabled).apply()
+        _usePhoneGps.value = enabled
+    }
+
     /** How much history each teammate's trail keeps, in minutes. */
     private val _trailMinutes = MutableStateFlow(prefs.getInt(KEY_TRAIL_MINUTES, DEFAULT_TRAIL_MINUTES))
     val trailMinutes: StateFlow<Int> = _trailMinutes.asStateFlow()
@@ -125,6 +134,7 @@ class AppSettings(context: Context) {
         val TRAIL_MINUTE_OPTIONS = listOf(30, 60, 180, 360)
         private const val KEY_TRAIL_MINUTES = "trail_minutes"
         private const val KEY_SHOW_OWN_RADIO = "show_own_radio_on_map"
+        private const val KEY_USE_PHONE_GPS = "use_phone_gps"
 
         const val DEFAULT_SILENCE_MINUTES = 60
         val SILENCE_MINUTE_OPTIONS = listOf(0, 15, 30, 60, 120)

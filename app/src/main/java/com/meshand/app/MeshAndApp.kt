@@ -5,6 +5,7 @@ import android.content.Context
 import com.meshand.app.data.alerts.SilenceAlertMonitor
 import com.meshand.app.data.meshtastic.MeshtasticClient
 import com.meshand.app.data.osmand.OsmAndBridge
+import com.meshand.app.data.phonegps.PhoneGpsFeeder
 import com.meshand.app.data.repository.NodeRepository
 import com.meshand.app.data.repository.PinRepository
 import com.meshand.app.data.repository.TrailRecorder
@@ -44,6 +45,7 @@ class AppGraph(app: Application) {
     val trails = TrailRecorder(repository.nodes, settings.trailMinutes, scope, store)
     val updates = UpdateChecker(settings, scope)
     val pins = PinRepository(app, client, repository.nodes, scope, store, osmAnd::findOsmAndPackage)
+    val phoneGps = PhoneGpsFeeder(app, settings, client, scope)
     private val silenceAlerts = SilenceAlertMonitor(app, settings, repository.activeNodes, client.status)
 
     init {

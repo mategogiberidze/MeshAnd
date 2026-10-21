@@ -31,12 +31,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.meshand.app.R
+import com.meshand.app.data.meshtastic.RadioInfoMapper
 import com.meshand.app.domain.Geo
 import com.meshand.app.domain.GpsHealth
 import com.meshand.app.domain.PositionAge
@@ -44,6 +46,7 @@ import com.meshand.app.domain.model.ConnectionStatus
 import com.meshand.app.domain.model.MeshNode
 import com.meshand.app.domain.model.OsmAndStatus
 import com.meshand.app.domain.model.PhoneGpsStatus
+import com.meshand.app.domain.model.RadioInfo
 import com.meshand.app.domain.model.Pin
 import com.meshand.app.ui.common.ColorDot
 import com.meshand.app.ui.common.DistanceBadge
@@ -83,6 +86,7 @@ fun StatusPage(
     osmAnd: OsmAndStatus,
     pinCount: Int,
     phoneGps: PhoneGpsStatus,
+    radioInfo: RadioInfo?,
     onUsePhoneGpsChange: (Boolean) -> Unit,
     onDisconnect: () -> Unit,
     onOsmAndEnabledChange: (Boolean) -> Unit,
@@ -115,8 +119,48 @@ fun StatusPage(
                 OverviewRow("Pins", if (pinCount == 0) "none shared yet" else "$pinCount shared in the last 24 h", onOpenPins)
             }
         }
+        if (radioInfo != null) item { RadioInfoCard(radioInfo, now) }
     }
 }
+
+/** The connected radio itself: battery, airtime, uptime, and what it is. */
+@Composable
+private fun RadioInfoCard(info: RadioInfo, now: Instant) {
+    val colors = MaterialTheme.colorScheme
+    SectionCard(title = "This radio") {
+        val battery = when {
+            info.pluggedIn -> "Plugged in"
+            info.batteryPercent != null -> "${info.batteryPercent} %"
+            else -> null
+        }
+        val volts = info.voltage?.let { String.format(Locale.US, "%.2f V", it) }
+        val low = !info.pluggedIn && (info.batteryPercent ?: 100) < 20
+        InfoRow("Battery", listOfNotNull(battery, volts).joinToString(" · ").ifEmpty { "unknown" }, if (low) colors.warning else null)
+        info.channelUtilization?.let { InfoRow("Channel busy", percent(it)) }
+        info.airUtilTx?.let { InfoRow("Your airtime", "${percent(it)} of the last hour") }
+        info.uptimeSeconds?.let { InfoRow("Running for", RadioInfoMapper.formatUptime(it)) }
+        info.hardware?.let { InfoRow("Hardware", it) }
+        info.firmware?.let { InfoRow("Firmware", it) }
+        info.role?.let { InfoRow("Role", it) }
+        listOfNotNull(info.region, info.modemPreset).takeIf { it.isNotEmpty() }?.let { InfoRow("LoRa", it.joinToString(" · ")) }
+        val name = listOfNotNull(info.longName, info.shortName?.let { "($it)" }).joinToString(" ")
+        InfoRow("Node", listOf(name, info.nodeIdHex.orEmpty()).filter { it.isNotBlank() }.joinToString(" · "))
+        HintText(
+            info.metricsAt?.let { "Battery and airtime updated ${formatAgo(Duration.between(it, now).seconds)}." }
+                ?: "Waiting for the radio's battery and airtime report…",
+        )
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String, valueColor: Color? = null) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(0.4f))
+        Text(value, style = MaterialTheme.typography.bodyMedium, color = valueColor ?: MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(0.6f))
+    }
+}
+
+private fun percent(value: Float): String = String.format(Locale.US, if (value < 10) "%.1f %%" else "%.0f %%", value)
 
 @Composable
 private fun OverviewRow(title: String, detail: String, onClick: () -> Unit) {

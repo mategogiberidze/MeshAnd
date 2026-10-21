@@ -90,7 +90,7 @@ adb logcat -s MeshAnd MeshAnd/SDK
   - Preview: `pip install -r site/requirements.txt && ./site/build.sh`, then `python3 -m http.server -d build/site`.
   - A link between guides on GitHub (`../CHANGELOG.md`) is rewritten by `build.sh`; a new kind of cross-folder link needs the same, or `--strict` fails.
   - The download button asks the GitHub API for `releases/latest`, so it needs no change per release.
-  - Features not yet in a release carry a "Next version" badge on the landing page (currently Chat and Phone GPS). **When releasing, remove those badges and the note below the feature list.** Keep the text in step with `README.md` and `CHANGELOG.md`.
+  - Features not yet in a release carry a "Next version" badge on the landing page (currently Chat, Phone GPS and Radio details). **When releasing, remove those badges and the note below the feature list.** Keep the text in step with `README.md` and `CHANGELOG.md`.
 
 ## Architecture (`app/src/main/java/com/meshand/app/`)
 - `MeshAndApp.kt`: the `Application` class. Owns `AppGraph` (settings, client, repository, OsmAnd bridge) for the whole process, wired by hand.
@@ -105,6 +105,7 @@ adb logcat -s MeshAnd MeshAnd/SDK
   - Shares one `InMemoryStorageProvider` across sessions.
 - `data/meshtastic/MeshtasticMapper.kt`: protobuf `NodeInfo` / `MeshPacket` → `MeshNode` / `LiveUpdate`, and the merge of the two. Pure functions, unit-tested.
 - `data/meshtastic/InMemoryStorageProvider.kt`: the SDK requires a `StorageProvider`. This is an in-memory one, so there is no database.
+- `data/repository/RadioInfoRepository.kt`: the connected radio's details for the "This radio" card on the Radio page (`domain/model/RadioInfo`, built by `data/meshtastic/RadioInfoMapper`, pure and tested). Identity, firmware, role and LoRa region/preset come from `ownNode` and `configBundle`; nothing else from the bundle is read, and it is never logged. Battery, voltage, channel use, airtime and uptime come from device telemetry: `telemetry.observe(ownNode)` plus `telemetry.requestDevice()` every 2 min. That request goes to our own radio only, never over LoRa. Note that `telemetry.observe(NodeId.LOCAL)` matches every node's telemetry, so always pass the real own node number.
 - `data/repository/NodeRepository.kt`: combines SDK `nodes` (the NodeDB) with live `packets` into `StateFlow<List<MeshNode>>`.
   - Nodes survive reconnects; they're cleared only when switching to a different radio.
   - Empty SDK snapshots at session start are ignored.
@@ -118,7 +119,7 @@ adb logcat -s MeshAnd MeshAnd/SDK
 - UI: Material 3 with one app theme (`ui/theme/Theme.kt`). It has a pine primary (the logo's `#1F5A47`), light and dark schemes (Settings → Appearance: System/Light/Dark, `AppSettings.themeMode`; `MeshAndTheme` also sets the system-bar icon colours and window background), and semantic `colorScheme.good`/`warning`. **Don't hard-code colours in screens.** Shared pieces are in `ui/common/Components.kt` (`SectionCard`, `HintText`, `StatusDot`, `ChoiceRow` segmented buttons, `SwitchRow`).
   - `ui/connection/` is the screen shown when not connected.
   - The main screen has a bottom bar with 5 pages (`Tab` in `MainActivity`, a plain `rememberSaveable` state, no navigation library):
-    - **Radio:** `StatusPage` (link, own GPS, OsmAnd switch, Team list button, overview), or `ConnectionScreen` when not connected
+    - **Radio:** `StatusPage` (link, own GPS, OsmAnd switch, Team list button, overview, "This radio" details), or `ConnectionScreen` when not connected
     - **Nodes:** `NodesPage`, compact cards that expand on tap, with a search box above 6 nodes
     - **Pins:** `PinsPage`, one card per pin, with a count badge on the tab
     - **Chat:** `ChatListPage` (every channel, then direct conversations, unread badges) and `ConversationPage` (bubbles, delivery state, compose box with a byte counter). The open conversation is `chatKey` in `MainActivity`; the bottom bar hides inside a conversation. "Message" on node cards and team member cards opens a direct conversation.

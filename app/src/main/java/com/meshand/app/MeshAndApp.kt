@@ -9,6 +9,7 @@ import com.meshand.app.data.phonegps.PhoneGpsFeeder
 import com.meshand.app.data.repository.ChatRepository
 import com.meshand.app.data.repository.NodeRepository
 import com.meshand.app.data.repository.PinRepository
+import com.meshand.app.data.repository.RadioInfoRepository
 import com.meshand.app.data.repository.TrailRecorder
 import com.meshand.app.data.settings.AppSettings
 import com.meshand.app.data.storage.LocalStore
@@ -48,6 +49,7 @@ class AppGraph(app: Application) {
     val pins = PinRepository(app, client, repository.nodes, scope, store, osmAnd::findOsmAndPackage)
     val phoneGps = PhoneGpsFeeder(app, settings, client, scope)
     val chat = ChatRepository(app, client, repository.nodes, scope, store)
+    val radioInfo = RadioInfoRepository(client, scope)
     private val silenceAlerts = SilenceAlertMonitor(app, settings, repository.activeNodes, client.status)
 
     init {

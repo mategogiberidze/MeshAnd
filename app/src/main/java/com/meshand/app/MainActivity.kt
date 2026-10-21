@@ -111,6 +111,7 @@ class MainActivity : ComponentActivity() {
             MeshAndTheme {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 val update by applicationContext.graph.updates.available.collectAsStateWithLifecycle()
+                val radioInfo by applicationContext.graph.radioInfo.info.collectAsStateWithLifecycle()
                 val chatMessages by viewModel.chatMessages.collectAsStateWithLifecycle()
                 val chatChannels by viewModel.chatChannels.collectAsStateWithLifecycle()
                 val chatUnread by viewModel.chatUnread.collectAsStateWithLifecycle()
@@ -213,6 +214,7 @@ class MainActivity : ComponentActivity() {
                                     osmAnd = state.osmAnd,
                                     pinCount = state.pins.size,
                                     phoneGps = state.phoneGps,
+                                    radioInfo = radioInfo,
                                     onUsePhoneGpsChange = ::setUsePhoneGps,
                                     onDisconnect = viewModel::disconnect,
                                     onOsmAndEnabledChange = viewModel::setOsmAndEnabled,

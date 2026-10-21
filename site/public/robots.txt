@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://meshand.app/sitemap.xml
+Sitemap: https://meshand.app/docs/sitemap.xml

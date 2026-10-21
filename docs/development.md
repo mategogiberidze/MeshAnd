@@ -61,6 +61,9 @@ The app never logs channel keys or radio configuration.
 
 Releases are built and signed by GitHub Actions:
 - **`ci.yml`** runs tests, lint and a debug build on every push to `main` and on pull requests.
+  Changes that only touch Markdown, `docs/`, `site/` or similar files skip the build.
+- **`pages.yml`** publishes the website at [meshand.app](https://meshand.app/) when `site/`,
+  `docs/` or `CHANGELOG.md` change.
 - **`release.yml`** runs when you push a version tag. It builds the signed APK and attaches it
   to a GitHub Release.
 

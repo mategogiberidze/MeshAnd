@@ -1,0 +1,19 @@
+{#- Adds social-preview tags to every guide page. Titles and descriptions come from hooks.py. -#}
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {%- set og_title = (page.meta.title if page.meta and page.meta.title else page.title) | striptags -%}
+  {%- set og_description = page.meta.description if page.meta and page.meta.description else config.site_description -%}
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="MeshAnd">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:title" content="{{ og_title }} - {{ config.site_name }}">
+  <meta property="og:description" content="{{ og_description }}">
+  <meta property="og:url" content="{{ page.canonical_url }}">
+  <meta property="og:image" content="https://meshand.app/images/social-preview.png">
+  <meta property="og:image:width" content="1280">
+  <meta property="og:image:height" content="640">
+  <meta property="og:image:alt" content="The MeshAnd logo next to a phone showing teammates as coloured dots on a topographic map.">
+  <meta name="twitter:card" content="summary_large_image">
+{% endblock %}

@@ -13,7 +13,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Decides whether the push or PR touches the app. Docs, the website and other non-build
+  # files are listed below; anything else counts as a project file.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          predicate-quantifier: some-with-excludes
+          filters: |
+            app:
+              - '**'
+              - '!**/*.md'
+              - '!docs/**'
+              - '!site/**'
+              - '!LICENSE'
+              - '!.github/ISSUE_TEMPLATE/**'
+              - '!.github/DISCUSSION_TEMPLATE/**'
+              - '!.github/workflows/pages.yml'
+              - '!.github/workflows/claude.yml'
+              - '!.github/workflows/claude-code-review.yml'
+
+  # The ruleset on main requires this check. When nothing in the app changed it is skipped,
+  # and a skipped job still counts as passed.
   build:
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

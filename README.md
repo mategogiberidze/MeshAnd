@@ -13,6 +13,7 @@
 ![Android 7+](https://img.shields.io/badge/Android-7%2B-3DDC84?logo=android&logoColor=white)
 
 **[Download the APK](https://github.com/mategogiberidze/MeshAnd/releases/latest)** ·
+[Website](https://meshand.app/) ·
 [Set up your radios](docs/radio-setup.md) ·
 [What's new](CHANGELOG.md) ·
 [Ask a question](https://github.com/mategogiberidze/MeshAnd/discussions) ·
@@ -189,8 +190,6 @@ connected, with a button to disconnect.
 - **Staying up to date:** when you open MeshAnd, it checks GitHub for a newer version and shows a
   **Download** button. Install the new APK over the old one; your radio and settings are kept. You
   can turn the check off in **Settings → About**.
-- **Automatic updates:** with [Obtainium](https://github.com/ImranR98/Obtainium), add
-  `https://github.com/mategogiberidze/MeshAnd` and it installs new releases for you.
 - **Is the download genuine?** Every release is signed with the same key, and Android refuses an
   update signed by anyone else. Each APK also comes with a `.sha256` file to check the download.
 - **Build it yourself:** see [docs/development.md](docs/development.md). A build you make yourself

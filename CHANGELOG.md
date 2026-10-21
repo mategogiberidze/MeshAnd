@@ -19,6 +19,10 @@ using the app, not for developers.
   was delivered (direct) or relayed by a neighbour (channel), and get a notification for new
   messages. Messages are saved on the phone. A message can be up to 233 bytes: about 230 Latin
   letters, or about 77 Georgian letters.
+- **Radio details.** The Radio page shows a "This radio" card with your radio's battery (percent
+  and voltage, or "Plugged in"), how busy the channel is, your own airtime, how long it has been
+  running, its hardware, firmware, role and LoRa region/preset. Battery and airtime refresh every
+  couple of minutes.
 
 ### Changed
 

@@ -4,7 +4,9 @@ What changed in each MeshAnd version. The section for a version becomes the desc
 [GitHub Release](https://github.com/mategogiberidze/MeshAnd/releases), so write it for people
 using the app, not for developers.
 
-## Unreleased
+## 0.3.0
+
+Chat, phone GPS for your radio, and radio details.
 
 ### New
 
@@ -28,6 +30,13 @@ using the app, not for developers.
 
 - MeshAnd now uses version 0.2.0 of the Meshtastic SDK (the library that talks to your radio).
   Nothing changes in how you use the app.
+
+### Updating
+
+- Install the new APK over 0.2.0. Your radio pairing, settings, trails and pins are kept.
+- MeshAnd still mostly listens. It sends a chat message or a pin only when you tap **Send**, and
+  your phone's position only to your own radio, and only while **Phone GPS** is switched on.
+- MeshAnd asks for location permission only when you switch on Phone GPS.
 
 ## 0.2.0
 

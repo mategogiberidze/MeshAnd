@@ -87,17 +87,36 @@ Choose who to watch, and get a notification if someone hasn't been heard for 15 
 
 </td>
 </tr>
+<tr>
+<td valign="top">
+
+### 💬 Chat
+Every channel on your radio has its own conversation, and direct messages to one person get
+theirs. You see when a message was delivered or relayed, and get a notification for new ones.
+
+</td>
+<td valign="top">
+
+### 📡 Phone GPS for your radio
+If your radio's GPS is stuck indoors, in a car or broken, MeshAnd can give it your phone's
+location. The radio shares it with the team on its usual schedule. Off until you switch it on.
+
+</td>
+</tr>
 </table>
 
 **Also:**
 - **Stays connected in your pocket.** It works with the screen off, reconnects by itself and
   remembers your radio.
-- **Remembers trails and pins** across restarts, with one button to clear them.
+- **Radio details:** battery (or "Plugged in"), how busy the channel is, your own airtime,
+  uptime, and the radio's hardware, firmware, role and LoRa settings.
+- **Remembers trails, pins and messages** across restarts, with one button to clear them.
 - **Light or dark theme**, or follow the phone.
 - **Tells you about new versions** by asking GitHub when it opens. This is its only internet use,
   and you can switch it off.
-- **Mostly just listens.** Apart from pins you choose to send, MeshAnd never transmits anything
-  and never changes your radio's settings.
+- **Mostly just listens.** It transmits only what you choose to send (messages and pins, plus
+  your phone's position to your own radio while Phone GPS is on), and never changes your radio's
+  settings.
 - **Only shows people heard in the last 24 hours**, so old nodes don't clutter the map.
 
 ## Why it exists
